@@ -14,8 +14,8 @@ import type {
   ProfileImageUpdateRequest,
 } from './types';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'https://onewave.syu-likelion.org';
+// 프록시 설정으로 /api/*는 next.config.mjs에서 백엔드로 리다이렉트됨
+const API_BASE_URL = '';
 
 // ==================== Helper Functions ====================
 async function handleResponse<T>(response: Response): Promise<T> {
