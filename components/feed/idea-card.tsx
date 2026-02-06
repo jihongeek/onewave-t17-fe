@@ -13,6 +13,23 @@ import {
   Clock,
 } from "lucide-react";
 
+const VOTE_STORAGE_KEY_PREFIX = "feed:vote:";
+
+function persistVote(
+  feedId: number,
+  payload: { upvotes: number; likedByMe: boolean }
+) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(
+      `${VOTE_STORAGE_KEY_PREFIX}${feedId}`,
+      JSON.stringify({ ...payload, updatedAt: Date.now() })
+    );
+  } catch {
+    // ignore storage failures
+  }
+}
+
 interface IdeaCardProps {
   idea: {
     id: string;
@@ -63,6 +80,7 @@ export function IdeaCard({ idea, onVoteChange }: IdeaCardProps) {
     setIsSubmitting(true);
     setVotes(nextVotes);
     setVoted(wasLiked ? null : "up");
+    persistVote(feedId, { upvotes: nextVotes, likedByMe: !wasLiked });
     onVoteChange?.({
       ideaId: idea.id,
       upvotes: nextVotes,
@@ -78,6 +96,10 @@ export function IdeaCard({ idea, onVoteChange }: IdeaCardProps) {
     } catch (error) {
       setVotes(prevVotes);
       setVoted(prevVoted);
+      persistVote(feedId, {
+        upvotes: prevVotes,
+        likedByMe: prevVoted === "up",
+      });
       onVoteChange?.({
         ideaId: idea.id,
         upvotes: prevVotes,
@@ -101,6 +123,7 @@ export function IdeaCard({ idea, onVoteChange }: IdeaCardProps) {
     setIsSubmitting(true);
     setVotes(Math.max(0, prevVotes - 1));
     setVoted(null);
+    persistVote(feedId, { upvotes: Math.max(0, prevVotes - 1), likedByMe: false });
     onVoteChange?.({
       ideaId: idea.id,
       upvotes: Math.max(0, prevVotes - 1),
@@ -112,6 +135,10 @@ export function IdeaCard({ idea, onVoteChange }: IdeaCardProps) {
     } catch (error) {
       setVotes(prevVotes);
       setVoted(prevVoted);
+      persistVote(feedId, {
+        upvotes: prevVotes,
+        likedByMe: prevVoted === "up",
+      });
       onVoteChange?.({
         ideaId: idea.id,
         upvotes: prevVotes,
