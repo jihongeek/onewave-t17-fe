@@ -107,6 +107,18 @@ export interface FeedPositionStatusResponse {
   remaining: number;
 }
 
+export type FeedApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface FeedApplicationResponse {
+  applicationId: number;
+  applicantName: string;
+  applicantProfileImageUrl?: string;
+  stack: string;
+  status: FeedApplicationStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface FeedCommentResponse {
   commentId: number;
   authorName: string;

@@ -2,6 +2,7 @@
 import type {
   AiAnalysisResponse,
   FeedApplyRequest,
+  FeedApplicationResponse,
   FeedCommentRequest,
   FeedCommentResponse,
   FeedCreateRequest,
@@ -206,6 +207,56 @@ export async function applyToFeed(
     headers: getAuthHeaders(),
     body: JSON.stringify(data),
   });
+  return handleResponse<MessageResponse>(response);
+}
+
+/**
+ * 팀 신청자 목록 조회 (피드 소유자 전용)
+ * GET /api/feeds/{feedId}/applications
+ */
+export async function listFeedApplications(
+  feedId: number
+): Promise<FeedApplicationResponse[]> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds/${feedId}/applications`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<FeedApplicationResponse[]>(response);
+}
+
+/**
+ * 팀 신청 승인
+ * POST /api/feeds/{feedId}/applications/{applicationId}/approve
+ */
+export async function approveFeedApplication(
+  feedId: number,
+  applicationId: number
+): Promise<MessageResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/feeds/${feedId}/applications/${applicationId}/approve`,
+    {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    }
+  );
+  return handleResponse<MessageResponse>(response);
+}
+
+/**
+ * 팀 신청 거절
+ * POST /api/feeds/{feedId}/applications/{applicationId}/reject
+ */
+export async function rejectFeedApplication(
+  feedId: number,
+  applicationId: number
+): Promise<MessageResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/feeds/${feedId}/applications/${applicationId}/reject`,
+    {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    }
+  );
   return handleResponse<MessageResponse>(response);
 }
 

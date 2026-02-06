@@ -13,11 +13,15 @@ import { useAuth } from "@/lib/auth";
 import { useAuthModal } from "@/components/auth-modal";
 import {
   addFeedComment,
+  approveFeedApplication,
   applyToFeed,
   getFeedDetail,
+  listFeedApplications,
   listFeedComments,
+  rejectFeedApplication,
 } from "@/lib/ideas/api";
 import type {
+  FeedApplicationResponse,
   FeedCommentResponse,
   FeedDetailResponse,
   FeedPositionStatusResponse,
@@ -32,6 +36,8 @@ import {
   AlertTriangle,
   Send,
   UserPlus,
+  Check,
+  X,
   LogIn,
 } from "lucide-react";
 
@@ -67,10 +73,17 @@ export default function IdeaDetailPage() {
   const { openModal } = useAuthModal();
   const [feed, setFeed] = useState<FeedDetailResponse | null>(null);
   const [comments, setComments] = useState<FeedCommentResponse[]>([]);
+  const [applications, setApplications] = useState<FeedApplicationResponse[]>(
+    []
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [isApplying, setIsApplying] = useState(false);
+  const [processingApplicationIds, setProcessingApplicationIds] = useState<
+    number[]
+  >([]);
+  const [isOwner, setIsOwner] = useState(false);
   const [baseVotes, setBaseVotes] = useState(0);
   const [votes, setVotes] = useState(0);
   const [voted, setVoted] = useState<"up" | "down" | null>(null);
@@ -98,10 +111,12 @@ export default function IdeaDetailPage() {
       setIsLoading(true);
       setErrorMessage(null);
       try {
-        const [feedResult, commentResult] = await Promise.allSettled([
+        const [feedResult, commentResult, applicationResult] =
+          await Promise.allSettled([
           getFeedDetail(parsedId),
           listFeedComments(parsedId),
-        ]);
+            listFeedApplications(parsedId),
+          ]);
 
         if (!isMounted) return;
 
@@ -118,6 +133,14 @@ export default function IdeaDetailPage() {
         } else {
           setComments([]);
         }
+
+        if (applicationResult.status === "fulfilled") {
+          setApplications(applicationResult.value);
+          setIsOwner(true);
+        } else {
+          setApplications([]);
+          setIsOwner(false);
+        }
       } catch (error) {
         if (!isMounted) return;
         setErrorMessage(
@@ -127,6 +150,8 @@ export default function IdeaDetailPage() {
         );
         setFeed(null);
         setComments([]);
+        setApplications([]);
+        setIsOwner(false);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -188,6 +213,53 @@ export default function IdeaDetailPage() {
       })
       .finally(() => {
         setIsApplying(false);
+      });
+  };
+
+  const updateApplicationStatus = (
+    applicationId: number,
+    status: "APPROVED" | "REJECTED"
+  ) => {
+    setApplications((prev) =>
+      prev.map((app) =>
+        app.applicationId === applicationId ? { ...app, status } : app
+      )
+    );
+  };
+
+  const handleApproveApplication = (applicationId: number) => {
+    if (!feed) return;
+    setProcessingApplicationIds((prev) => [...prev, applicationId]);
+    approveFeedApplication(feed.feedId, applicationId)
+      .then(() => {
+        updateApplicationStatus(applicationId, "APPROVED");
+        alert("신청을 승인했습니다.");
+      })
+      .catch(() => {
+        alert("승인 처리에 실패했습니다.");
+      })
+      .finally(() => {
+        setProcessingApplicationIds((prev) =>
+          prev.filter((id) => id !== applicationId)
+        );
+      });
+  };
+
+  const handleRejectApplication = (applicationId: number) => {
+    if (!feed) return;
+    setProcessingApplicationIds((prev) => [...prev, applicationId]);
+    rejectFeedApplication(feed.feedId, applicationId)
+      .then(() => {
+        updateApplicationStatus(applicationId, "REJECTED");
+        alert("신청을 거절했습니다.");
+      })
+      .catch(() => {
+        alert("거절 처리에 실패했습니다.");
+      })
+      .finally(() => {
+        setProcessingApplicationIds((prev) =>
+          prev.filter((id) => id !== applicationId)
+        );
       });
   };
   if (authLoading || isLoading) {
@@ -587,6 +659,97 @@ export default function IdeaDetailPage() {
                     )}
                   </div>
 
+                  {isOwner && (
+                    <div className="mt-4 border-t border-border pt-4">
+                      <h3 className="mb-2 text-xs font-semibold text-foreground">
+                        팀 신청자
+                      </h3>
+                      <div className="flex flex-col gap-2">
+                        {applications.map((application) => {
+                          const isProcessing =
+                            processingApplicationIds.includes(
+                              application.applicationId
+                            );
+                          const isPending =
+                            application.status === "PENDING" && !isProcessing;
+
+                          return (
+                            <div
+                              key={application.applicationId}
+                              className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Avatar className="h-8 w-8">
+                                  {application.applicantProfileImageUrl && (
+                                    <AvatarImage
+                                      src={application.applicantProfileImageUrl}
+                                      alt={application.applicantName}
+                                    />
+                                  )}
+                                  <AvatarFallback className="bg-secondary text-xs">
+                                    {application.applicantName.charAt(0)}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <div className="text-sm font-medium text-foreground">
+                                    {application.applicantName}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {application.stack} ·{" "}
+                                    {formatDate(application.createdAt)}
+                                  </div>
+                                </div>
+                              </div>
+                              {application.status === "PENDING" ? (
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-8 w-8"
+                                    disabled={!isPending}
+                                    onClick={() =>
+                                      handleApproveApplication(
+                                        application.applicationId
+                                      )
+                                    }
+                                  >
+                                    <Check className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    type="button"
+                                    size="icon"
+                                    variant="outline"
+                                    className="h-8 w-8"
+                                    disabled={!isPending}
+                                    onClick={() =>
+                                      handleRejectApplication(
+                                        application.applicationId
+                                      )
+                                    }
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">
+                                  {application.status === "APPROVED"
+                                    ? "승인됨"
+                                    : "거절됨"}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                        {applications.length === 0 && (
+                          <div className="rounded-lg border border-border bg-secondary/30 p-3 text-xs text-muted-foreground">
+                            아직 신청자가 없습니다.
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-4 border-t border-border pt-4">
                     <h3 className="mb-2 text-xs font-semibold text-foreground">
                       모집 중인 역할
@@ -598,7 +761,7 @@ export default function IdeaDetailPage() {
                           variant="outline"
                           className="text-xs"
                         >
-                          {position.stack} {position.remaining}/{position.capacity}
+                          {position.stack} : {position.remaining}명
                         </Badge>
                       ))}
                       {positions.length === 0 && (
@@ -609,15 +772,17 @@ export default function IdeaDetailPage() {
                     </div>
                   </div>
 
-                  <Button
-                    className="mt-4 w-full"
-                    size="sm"
-                    onClick={handleApplyToTeam}
-                    disabled={isApplying}
-                  >
-                    <UserPlus className="mr-1.5 h-4 w-4" />
-                    팀 참가 신청
-                  </Button>
+                  {!isOwner && (
+                    <Button
+                      className="mt-4 w-full"
+                      size="sm"
+                      onClick={handleApplyToTeam}
+                      disabled={isApplying}
+                    >
+                      <UserPlus className="mr-1.5 h-4 w-4" />
+                      팀 참가 신청
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
