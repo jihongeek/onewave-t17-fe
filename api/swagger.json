@@ -15,8 +15,28 @@
   ],
   "tags": [
     {
+      "name": "Idea",
+      "description": "Idea registration and management API"
+    },
+    {
+      "name": "Feed",
+      "description": "Feed for ideas and AI analysis"
+    },
+    {
+      "name": "Roadmap",
+      "description": "Simple roadmap management"
+    },
+    {
+      "name": "Startup Recommendation",
+      "description": "Recommend startup support programs"
+    },
+    {
       "name": "Gemini Test",
       "description": "Simple test endpoint for Gemini API"
+    },
+    {
+      "name": "AI Analysis",
+      "description": "AI analysis for ideas"
     },
     {
       "name": "User",
@@ -122,6 +142,603 @@
             }
           }
         }
+      }
+    },
+    "/api/roadmaps": {
+      "get": {
+        "tags": ["Roadmap"],
+        "summary": "List roadmaps",
+        "description": "List roadmaps created by the current user",
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoadmapResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Roadmap"],
+        "summary": "Create roadmap",
+        "description": "Create a roadmap for the current user",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RoadmapCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoadmapResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/ideas": {
+      "get": {
+        "tags": ["Idea"],
+        "summary": "List my ideas",
+        "description": "Get a list of ideas created by the current user",
+        "operationId": "listMyIdeas",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IdeaResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Idea"],
+        "summary": "Create idea",
+        "description": "Register a new idea for the current user",
+        "operationId": "createIdea",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IdeaCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeaResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/ideas/{ideaId}/analysis": {
+      "get": {
+        "tags": ["AI Analysis"],
+        "summary": "Get analysis result",
+        "description": "Get the latest analysis result for an idea",
+        "operationId": "getAnalysis",
+        "parameters": [
+          {
+            "name": "ideaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiAnalysisResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["AI Analysis"],
+        "summary": "Analyze idea",
+        "description": "Analyze an idea and store the result",
+        "operationId": "analyze",
+        "parameters": [
+          {
+            "name": "ideaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AiAnalysisResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds": {
+      "get": {
+        "tags": ["Feed"],
+        "summary": "List feeds",
+        "description": "Get feed list with summary info",
+        "operationId": "listFeeds",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedListItemResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Feed"],
+        "summary": "Create feed",
+        "description": "Register an idea and its AI analysis into the feed",
+        "operationId": "createFeed",
+        "requestBody": {
+          "description": "Create feed with recruiting positions",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedCreateRequest"
+              },
+              "example": {
+                "ideaId": 1,
+                "positions": [
+                  {
+                    "stack": "Frontend",
+                    "capacity": 1
+                  },
+                  {
+                    "stack": "Backend",
+                    "capacity": 2
+                  },
+                  {
+                    "stack": "AI",
+                    "capacity": 1
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedDetailResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds/{feedId}/likes": {
+      "post": {
+        "tags": ["Feed"],
+        "summary": "Like feed",
+        "description": "Like a feed once per user",
+        "operationId": "likeFeed",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Feed"],
+        "summary": "Unlike feed",
+        "description": "Cancel like on a feed",
+        "operationId": "unlikeFeed",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds/{feedId}/comments": {
+      "get": {
+        "tags": ["Feed"],
+        "summary": "List comments",
+        "description": "List all comments for a feed",
+        "operationId": "listComments",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedCommentResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Feed"],
+        "summary": "Add comment",
+        "description": "Add a comment to a feed",
+        "operationId": "addComment",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedCommentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedCommentResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds/{feedId}/applications": {
+      "get": {
+        "tags": ["Feed"],
+        "summary": "List feed applications",
+        "description": "List applications for a feed (owner only)",
+        "operationId": "listFeedApplications",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/FeedApplicationResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "post": {
+        "tags": ["Feed"],
+        "summary": "Apply to feed",
+        "description": "Apply to a feed with selected stack",
+        "operationId": "applyToFeed",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FeedApplyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds/{feedId}/applications/{applicationId}/reject": {
+      "post": {
+        "tags": ["Feed"],
+        "summary": "Reject application",
+        "description": "Reject a feed application (owner only)",
+        "operationId": "rejectApplication",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds/{feedId}/applications/{applicationId}/approve": {
+      "post": {
+        "tags": ["Feed"],
+        "summary": "Approve application",
+        "description": "Approve a feed application (owner only)",
+        "operationId": "approveApplication",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "applicationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
       }
     },
     "/api/auth/signup": {
@@ -483,6 +1100,334 @@
           }
         ]
       }
+    },
+    "/api/users/me/teams": {
+      "get": {
+        "tags": ["User"],
+        "summary": "My teams",
+        "description": "Get teams I have joined",
+        "operationId": "myTeams",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyTeamResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/roadmaps/{roadmapId}": {
+      "get": {
+        "tags": ["Roadmap"],
+        "summary": "Get roadmap",
+        "description": "Get a roadmap created by the current user",
+        "operationId": "get",
+        "parameters": [
+          {
+            "name": "roadmapId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/RoadmapResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Roadmap"],
+        "summary": "Delete roadmap",
+        "description": "Delete a roadmap owned by the current user",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "name": "roadmapId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/ideas/{ideaId}": {
+      "get": {
+        "tags": ["Idea"],
+        "summary": "Get my idea",
+        "description": "Get a single idea created by the current user",
+        "operationId": "getMyIdea",
+        "parameters": [
+          {
+            "name": "ideaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdeaResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Idea"],
+        "summary": "Delete idea",
+        "description": "Delete an idea owned by the current user",
+        "operationId": "deleteIdea",
+        "parameters": [
+          {
+            "name": "ideaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/ideas/{ideaId}/recommendations": {
+      "get": {
+        "tags": ["Startup Recommendation"],
+        "summary": "Recommend programs",
+        "description": "Recommend startup support programs for an idea",
+        "operationId": "recommend",
+        "parameters": [
+          {
+            "name": "ideaId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "perPage",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StartupRecommendationResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds/{feedId}": {
+      "get": {
+        "tags": ["Feed"],
+        "summary": "Get feed detail",
+        "description": "Get full idea and AI analysis details",
+        "operationId": "getFeedDetail",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/FeedDetailResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["Feed"],
+        "summary": "Delete feed",
+        "description": "Delete a feed owned by the current user",
+        "operationId": "deleteFeed",
+        "parameters": [
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds/applications/me": {
+      "get": {
+        "tags": ["Feed"],
+        "summary": "My applications",
+        "description": "Get my application status list",
+        "operationId": "listMyApplications",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/MyApplicationResponse"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/feeds/comments/{commentId}": {
+      "delete": {
+        "tags": ["Feed"],
+        "summary": "Delete comment",
+        "description": "Delete a comment owned by the current user",
+        "operationId": "deleteComment",
+        "parameters": [
+          {
+            "name": "commentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -516,6 +1461,401 @@
         "type": "object",
         "properties": {
           "text": {
+            "type": "string"
+          }
+        }
+      },
+      "RoadmapCreateRequest": {
+        "required": ["budget", "priority", "teamSize", "timeline"],
+        "type": "object",
+        "properties": {
+          "teamSize": {
+            "type": "string"
+          },
+          "budget": {
+            "type": "string"
+          },
+          "timeline": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          }
+        }
+      },
+      "RoadmapResponse": {
+        "type": "object",
+        "properties": {
+          "roadmapId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "teamSize": {
+            "type": "string"
+          },
+          "budget": {
+            "type": "string"
+          },
+          "timeline": {
+            "type": "string"
+          },
+          "priority": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "IdeaCreateRequest": {
+        "required": [
+          "category",
+          "differentiation",
+          "problem",
+          "solution",
+          "stage",
+          "targetCustomer",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 0,
+            "type": "string"
+          },
+          "problem": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "targetCustomer": {
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "solution": {
+            "maxLength": 3000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "differentiation": {
+            "maxLength": 2000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "HEALTHCARE",
+              "FINTECH",
+              "EDUTECH",
+              "ECOMMERCE",
+              "SAAS",
+              "SOCIAL",
+              "OTHER"
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "enum": ["IDEA", "PROTOTYPE", "MVP", "LAUNCHED"]
+          }
+        }
+      },
+      "IdeaResponse": {
+        "type": "object",
+        "properties": {
+          "ideaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "problem": {
+            "type": "string"
+          },
+          "targetCustomer": {
+            "type": "string"
+          },
+          "solution": {
+            "type": "string"
+          },
+          "differentiation": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "HEALTHCARE",
+              "FINTECH",
+              "EDUTECH",
+              "ECOMMERCE",
+              "SAAS",
+              "SOCIAL",
+              "OTHER"
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "enum": ["IDEA", "PROTOTYPE", "MVP", "LAUNCHED"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AiAnalysisResponse": {
+        "type": "object",
+        "properties": {
+          "analysisId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ideaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "marketScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "innovationScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "feasibilityScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "strength1": {
+            "type": "string"
+          },
+          "strength2": {
+            "type": "string"
+          },
+          "improvements1": {
+            "type": "string"
+          },
+          "improvements2": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FeedCreateRequest": {
+        "required": ["ideaId", "positions"],
+        "type": "object",
+        "properties": {
+          "ideaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedPositionRequest"
+            }
+          }
+        }
+      },
+      "FeedPositionRequest": {
+        "required": ["stack"],
+        "type": "object",
+        "properties": {
+          "stack": {
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "capacity": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "FeedDetailResponse": {
+        "type": "object",
+        "properties": {
+          "feedId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "problem": {
+            "type": "string"
+          },
+          "targetCustomer": {
+            "type": "string"
+          },
+          "solution": {
+            "type": "string"
+          },
+          "differentiation": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "HEALTHCARE",
+              "FINTECH",
+              "EDUTECH",
+              "ECOMMERCE",
+              "SAAS",
+              "SOCIAL",
+              "OTHER"
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "enum": ["IDEA", "PROTOTYPE", "MVP", "LAUNCHED"]
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "likeCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "likedByMe": {
+            "type": "boolean"
+          },
+          "members": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedMemberResponse"
+            }
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FeedPositionStatusResponse"
+            }
+          },
+          "marketScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "innovationScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "feasibilityScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "strength1": {
+            "type": "string"
+          },
+          "strength2": {
+            "type": "string"
+          },
+          "improvements1": {
+            "type": "string"
+          },
+          "improvements2": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "FeedMemberResponse": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "profileImageUrl": {
+            "type": "string"
+          },
+          "stack": {
+            "type": "string"
+          }
+        }
+      },
+      "FeedPositionStatusResponse": {
+        "type": "object",
+        "properties": {
+          "stack": {
+            "type": "string"
+          },
+          "capacity": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "filled": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "remaining": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "FeedCommentRequest": {
+        "required": ["content"],
+        "type": "object",
+        "properties": {
+          "content": {
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string"
+          }
+        }
+      },
+      "FeedCommentResponse": {
+        "type": "object",
+        "properties": {
+          "commentId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "authorProfileImageUrl": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "content": {
+            "type": "string"
+          }
+        }
+      },
+      "FeedApplyRequest": {
+        "required": ["stack"],
+        "type": "object",
+        "properties": {
+          "stack": {
+            "maxLength": 50,
+            "minLength": 0,
             "type": "string"
           }
         }
@@ -682,6 +2022,220 @@
           },
           "newPassword": {
             "type": "string"
+          }
+        }
+      },
+      "MyTeamResponse": {
+        "type": "object",
+        "properties": {
+          "feedId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ideaTitle": {
+            "type": "string"
+          },
+          "ownerName": {
+            "type": "string"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "joinedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "StartupRecommendationItem": {
+        "type": "object",
+        "properties": {
+          "pbancSn": {
+            "type": "string"
+          },
+          "bizPbancNm": {
+            "type": "string"
+          },
+          "suptBizClsfc": {
+            "type": "string"
+          },
+          "pbancCtnt": {
+            "type": "string"
+          },
+          "aplyTrgt": {
+            "type": "string"
+          },
+          "aplyTrgtCtnt": {
+            "type": "string"
+          },
+          "bizEnyy": {
+            "type": "string"
+          },
+          "suptRegin": {
+            "type": "string"
+          },
+          "detlPgUrl": {
+            "type": "string"
+          },
+          "aplyMthdOnliRcptIstc": {
+            "type": "string"
+          },
+          "bizGdncUrl": {
+            "type": "string"
+          },
+          "pbancNtrpNm": {
+            "type": "string"
+          },
+          "pbancRcptBgngDt": {
+            "type": "string",
+            "format": "date"
+          },
+          "pbancRcptEndDt": {
+            "type": "string",
+            "format": "date"
+          },
+          "score": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "StartupRecommendationResponse": {
+        "type": "object",
+        "properties": {
+          "ideaId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "analysisId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "candidateCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StartupRecommendationItem"
+            }
+          }
+        }
+      },
+      "FeedListItemResponse": {
+        "type": "object",
+        "properties": {
+          "feedId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "title": {
+            "type": "string"
+          },
+          "problem": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "HEALTHCARE",
+              "FINTECH",
+              "EDUTECH",
+              "ECOMMERCE",
+              "SAAS",
+              "SOCIAL",
+              "OTHER"
+            ]
+          },
+          "authorName": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "commentCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "likeCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "totalScore": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "likedByMe": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FeedApplicationResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "applicantName": {
+            "type": "string"
+          },
+          "applicantProfileImageUrl": {
+            "type": "string"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "APPROVED", "REJECTED"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "MyApplicationResponse": {
+        "type": "object",
+        "properties": {
+          "applicationId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "feedId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "ideaTitle": {
+            "type": "string"
+          },
+          "stack": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": ["PENDING", "APPROVED", "REJECTED"]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       }

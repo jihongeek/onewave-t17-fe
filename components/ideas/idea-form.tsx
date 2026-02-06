@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -13,23 +12,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sparkles, Loader2 } from "lucide-react";
+import { Sparkles, Loader2, X } from "lucide-react";
 import type { IdeaCreateRequest } from "@/lib/ideas/types";
 
 interface IdeaFormProps {
   onAnalyze: (data: IdeaCreateRequest) => void;
   isAnalyzing: boolean;
-  postToUpvoteFeed: boolean;
-  onPostToUpvoteFeedChange: (value: boolean) => void;
-  isPostToUpvoteFeedDisabled?: boolean;
+  onPublish: (positions: { stack: string; capacity: number }[]) => void;
+  isPublishDisabled?: boolean;
 }
 
 export function IdeaForm({
   onAnalyze,
   isAnalyzing,
-  postToUpvoteFeed,
-  onPostToUpvoteFeedChange,
-  isPostToUpvoteFeedDisabled = false,
+  onPublish,
+  isPublishDisabled = false,
 }: IdeaFormProps) {
   const [title, setTitle] = useState("AI 기반 개인 건강 관리 챗봇");
   const [problem, setProblem] = useState(
@@ -47,6 +44,41 @@ export function IdeaForm({
   const [category, setCategory] =
     useState<IdeaCreateRequest["category"]>("HEALTHCARE");
   const [stage, setStage] = useState<IdeaCreateRequest["stage"]>("IDEA");
+  const [positions, setPositions] = useState<
+    { stack: string; capacity: number }[]
+  >([]);
+  const [positionStack, setPositionStack] = useState("");
+  const [positionCapacity, setPositionCapacity] = useState("1");
+
+  const handleAddPosition = () => {
+    const trimmedStack = positionStack.trim();
+    const parsedCapacity = Number(positionCapacity);
+    if (!trimmedStack || Number.isNaN(parsedCapacity) || parsedCapacity < 1) {
+      return;
+    }
+    setPositions((prev) => {
+      const existingIndex = prev.findIndex(
+        (position) =>
+          position.stack.toLowerCase() === trimmedStack.toLowerCase()
+      );
+      if (existingIndex >= 0) {
+        return prev.map((position, index) =>
+          index === existingIndex
+            ? { ...position, capacity: position.capacity + parsedCapacity }
+            : position
+        );
+      }
+      return [...prev, { stack: trimmedStack, capacity: parsedCapacity }];
+    });
+    setPositionStack("");
+    setPositionCapacity("1");
+  };
+
+  const handleRemovePosition = (stackToRemove: string) => {
+    setPositions((prev) =>
+      prev.filter((position) => position.stack !== stackToRemove)
+    );
+  };
 
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm lg:p-8">
@@ -167,29 +199,72 @@ export function IdeaForm({
           </div>
         </div>
 
-        <div className="rounded-xl border border-border bg-secondary/40 p-4">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <h3 className="text-sm font-semibold text-foreground">
-                업보트 피드 공개
-              </h3>
-              <p className="text-xs text-muted-foreground">
-                AI 분석 후 업보트 피드에 아이디어를 올립니다.
-              </p>
-            </div>
-            <Switch
-              checked={postToUpvoteFeed}
-              onCheckedChange={onPostToUpvoteFeedChange}
-              disabled={isPostToUpvoteFeedDisabled}
-              aria-label="업보트 피드 공개 토글"
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="position-stack">필요한 직군</Label>
+          <div className="grid gap-2 sm:grid-cols-[1fr_120px_auto]">
+            <Input
+              id="position-stack"
+              placeholder="예: Frontend"
+              value={positionStack}
+              onChange={(e) => setPositionStack(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleAddPosition();
+                }
+              }}
             />
+            <Input
+              id="position-capacity"
+              type="number"
+              min={1}
+              placeholder="인원"
+              value={positionCapacity}
+              onChange={(e) => setPositionCapacity(e.target.value)}
+            />
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleAddPosition}
+              disabled={!positionStack.trim() || !positionCapacity.trim()}
+            >
+              추가
+            </Button>
           </div>
-          {isPostToUpvoteFeedDisabled ? (
-            <p className="mt-2 text-xs text-muted-foreground">
-              AI 분석을 완료하면 공개 여부를 선택할 수 있습니다.
+          {positions.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {positions.map((position) => (
+                <span
+                  key={position.stack}
+                  className="inline-flex items-center gap-1 rounded-full border border-border bg-muted px-3 py-1 text-xs text-foreground"
+                >
+                  {position.stack} · {position.capacity}명
+                  <button
+                    type="button"
+                    onClick={() => handleRemovePosition(position.stack)}
+                    className="rounded-full p-0.5 text-muted-foreground transition hover:text-foreground"
+                    aria-label={`${position.stack} 삭제`}
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              아직 추가된 직군이 없습니다. 공개 시 필요한 포지션을 등록해 주세요.
             </p>
-          ) : null}
+          )}
         </div>
+
+        <Button
+          type="button"
+          className="w-full"
+          onClick={() => onPublish(positions)}
+          disabled={isPublishDisabled}
+        >
+          공개
+        </Button>
 
         <Button
           type="submit"

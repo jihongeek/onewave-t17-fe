@@ -1,13 +1,14 @@
 'use client';
 
 import { useCallback, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { IdeaForm } from '@/components/ideas/idea-form';
 import { AiResultPanel } from '@/components/ideas/ai-result-panel';
 import { useAuth } from '@/lib/auth';
 import { useAuthModal } from '@/components/auth-modal';
-import { analyzeIdea, createIdea } from '@/lib/ideas/api';
+import { analyzeIdea, createFeed, createIdea } from '@/lib/ideas/api';
 import type { IdeaCreateRequest } from '@/lib/ideas/types';
 
 export interface AiResult {
@@ -23,9 +24,11 @@ export interface AiResult {
 export default function NewIdeaPage() {
   const [aiResult, setAiResult] = useState<AiResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [postToUpvoteFeed, setPostToUpvoteFeed] = useState(false);
+  const [ideaId, setIdeaId] = useState<number | null>(null);
+  const [isPublishing, setIsPublishing] = useState(false);
   const { isLoggedIn } = useAuth();
   const { openModal } = useAuthModal();
+  const router = useRouter();
 
   const requireLogin = useCallback(() => {
     if (isLoggedIn) return true;
@@ -38,17 +41,20 @@ export default function NewIdeaPage() {
     if (!requireLogin()) return;
     setIsAnalyzing(true);
     setAiResult(null);
+    setIdeaId(null);
 
     try {
       const createdIdea = await createIdea(formData);
+      setIdeaId(createdIdea.ideaId);
       const analysis = await analyzeIdea(createdIdea.ideaId);
 
       const strengths = [analysis.strength1, analysis.strength2].filter(
         (value): value is string => Boolean(value && value.trim())
       );
-      const improvements = [analysis.improvements1, analysis.improvements2].filter(
-        (value): value is string => Boolean(value && value.trim())
-      );
+      const improvements = [
+        analysis.improvements1,
+        analysis.improvements2,
+      ].filter((value): value is string => Boolean(value && value.trim()));
 
       const summaryParts = [];
       if (strengths.length > 0) {
@@ -64,7 +70,9 @@ export default function NewIdeaPage() {
         innovationScore: analysis.innovationScore ?? 0,
         feasibilityScore: analysis.feasibilityScore ?? 0,
         strengths:
-          strengths.length > 0 ? strengths : ['강점 정보가 제공되지 않았습니다.'],
+          strengths.length > 0
+            ? strengths
+            : ['강점 정보가 제공되지 않았습니다.'],
         improvements:
           improvements.length > 0
             ? improvements
@@ -80,6 +88,27 @@ export default function NewIdeaPage() {
       alert(message);
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const handlePublish = async (
+    positions: { stack: string; capacity: number }[]
+  ) => {
+    if (!requireLogin()) return;
+    if (!ideaId) {
+      alert('AI 분석을 완료한 뒤 공개할 수 있습니다.');
+      return;
+    }
+    setIsPublishing(true);
+    try {
+      await createFeed({ ideaId, positions });
+      router.push('/feed');
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : '공개에 실패했습니다.';
+      alert(message);
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -103,9 +132,8 @@ export default function NewIdeaPage() {
               <IdeaForm
                 onAnalyze={handleAnalyze}
                 isAnalyzing={isAnalyzing}
-                postToUpvoteFeed={postToUpvoteFeed}
-                onPostToUpvoteFeedChange={setPostToUpvoteFeed}
-                isPostToUpvoteFeedDisabled={!aiResult || isAnalyzing}
+                onPublish={handlePublish}
+                isPublishDisabled={!aiResult || isAnalyzing || isPublishing}
               />
             </div>
             <div className="lg:col-span-2">

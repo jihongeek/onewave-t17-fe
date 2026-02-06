@@ -1,5 +1,11 @@
 // Idea & AI Analysis API Functions - Based on swagger.json
-import type { AiAnalysisResponse, IdeaCreateRequest, IdeaResponse } from './types';
+import type {
+  AiAnalysisResponse,
+  FeedCreateRequest,
+  FeedDetailResponse,
+  IdeaCreateRequest,
+  IdeaResponse,
+} from './types';
 
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL || 'https://onewave.syu-likelion.org';
@@ -52,16 +58,11 @@ export async function createIdea(
  * 아이디어 AI 분석 실행
  * POST /api/ideas/{ideaId}/analysis
  */
-export async function analyzeIdea(
-  ideaId: number
-): Promise<AiAnalysisResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/ideas/${ideaId}/analysis`,
-    {
-      method: 'POST',
-      headers: getAuthHeaders(),
-    }
-  );
+export async function analyzeIdea(ideaId: number): Promise<AiAnalysisResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/ideas/${ideaId}/analysis`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
   return handleResponse<AiAnalysisResponse>(response);
 }
 
@@ -69,15 +70,27 @@ export async function analyzeIdea(
  * 아이디어 AI 분석 결과 조회
  * GET /api/ideas/{ideaId}/analysis
  */
-export async function getAnalysis(
-  ideaId: number
-): Promise<AiAnalysisResponse> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/ideas/${ideaId}/analysis`,
-    {
-      method: 'GET',
-      headers: getAuthHeaders(),
-    }
-  );
+export async function getAnalysis(ideaId: number): Promise<AiAnalysisResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/ideas/${ideaId}/analysis`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
   return handleResponse<AiAnalysisResponse>(response);
+}
+
+// ==================== Feed API ====================
+
+/**
+ * 피드 공개 등록
+ * POST /api/feeds
+ */
+export async function createFeed(
+  data: FeedCreateRequest
+): Promise<FeedDetailResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<FeedDetailResponse>(response);
 }

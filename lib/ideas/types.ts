@@ -23,6 +23,14 @@ export interface IdeaCreateRequest {
   stage: IdeaStage;
 }
 
+export interface FeedCreateRequest {
+  ideaId: number;
+  positions: {
+    stack: string;
+    capacity: number;
+  }[];
+}
+
 // ==================== Response Types ====================
 export interface IdeaResponse {
   ideaId: number;
@@ -49,4 +57,27 @@ export interface AiAnalysisResponse {
   improvements2?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface FeedDetailResponse {
+  feedId: number;
+  title: string;
+  problem: string;
+  targetCustomer: string;
+  solution: string;
+  differentiation: string;
+  category: IdeaCategory;
+  stage: IdeaStage;
+  authorName: string;
+  likeCount: number;
+  likedByMe: boolean;
+  marketScore: number;
+  innovationScore: number;
+  feasibilityScore: number;
+  totalScore: number;
+  strength1?: string;
+  strength2?: string;
+  improvements1?: string;
+  improvements2?: string;
+  createdAt: string;
 }
