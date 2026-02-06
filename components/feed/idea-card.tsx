@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { likeFeed, unlikeFeed } from "@/lib/ideas/api";
@@ -27,6 +27,11 @@ interface IdeaCardProps {
     createdAt: string;
     likedByMe?: boolean;
   };
+  onVoteChange?: (payload: {
+    ideaId: string;
+    upvotes: number;
+    likedByMe: boolean;
+  }) => void;
 }
 
 function getScoreColor(score: number) {
@@ -35,12 +40,16 @@ function getScoreColor(score: number) {
   return "text-destructive";
 }
 
-export function IdeaCard({ idea }: IdeaCardProps) {
+export function IdeaCard({ idea, onVoteChange }: IdeaCardProps) {
   const [votes, setVotes] = useState(idea.upvotes);
   const [voted, setVoted] = useState<"up" | "down" | null>(
     idea.likedByMe ? "up" : null
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    setVotes(idea.upvotes);
+    setVoted(idea.likedByMe ? "up" : null);
+  }, [idea.likedByMe, idea.upvotes]);
 
   const handleUpvote = async () => {
     if (isSubmitting) return;
@@ -54,6 +63,11 @@ export function IdeaCard({ idea }: IdeaCardProps) {
     setIsSubmitting(true);
     setVotes(nextVotes);
     setVoted(wasLiked ? null : "up");
+    onVoteChange?.({
+      ideaId: idea.id,
+      upvotes: nextVotes,
+      likedByMe: !wasLiked,
+    });
 
     try {
       if (wasLiked) {
@@ -64,6 +78,11 @@ export function IdeaCard({ idea }: IdeaCardProps) {
     } catch (error) {
       setVotes(prevVotes);
       setVoted(prevVoted);
+      onVoteChange?.({
+        ideaId: idea.id,
+        upvotes: prevVotes,
+        likedByMe: prevVoted === "up",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -82,12 +101,22 @@ export function IdeaCard({ idea }: IdeaCardProps) {
     setIsSubmitting(true);
     setVotes(Math.max(0, prevVotes - 1));
     setVoted(null);
+    onVoteChange?.({
+      ideaId: idea.id,
+      upvotes: Math.max(0, prevVotes - 1),
+      likedByMe: false,
+    });
 
     try {
       await unlikeFeed(feedId);
     } catch (error) {
       setVotes(prevVotes);
       setVoted(prevVoted);
+      onVoteChange?.({
+        ideaId: idea.id,
+        upvotes: prevVotes,
+        likedByMe: prevVoted === "up",
+      });
     } finally {
       setIsSubmitting(false);
     }

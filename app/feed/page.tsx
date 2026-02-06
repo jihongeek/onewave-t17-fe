@@ -142,6 +142,26 @@ export default function FeedPage() {
     return sorted.map(toIdeaCardData);
   }, [filteredFeeds, sortBy]);
 
+  const handleVoteChange = (payload: {
+    ideaId: string;
+    upvotes: number;
+    likedByMe: boolean;
+  }) => {
+    const feedId = Number(payload.ideaId);
+    if (Number.isNaN(feedId)) return;
+    setFeeds((prev) =>
+      prev.map((feed) =>
+        feed.feedId === feedId
+          ? {
+              ...feed,
+              likeCount: payload.upvotes,
+              likedByMe: payload.likedByMe,
+            }
+          : feed
+      )
+    );
+  };
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
@@ -179,7 +199,11 @@ export default function FeedPage() {
             {!isLoading &&
               !errorMessage &&
               sortedIdeas.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} />
+                <IdeaCard
+                  key={idea.id}
+                  idea={idea}
+                  onVoteChange={handleVoteChange}
+                />
               ))}
             {!isLoading && !errorMessage && sortedIdeas.length === 0 && (
               <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
