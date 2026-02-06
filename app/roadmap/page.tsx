@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
 import { RoadmapForm } from '@/components/roadmap/roadmap-form';
@@ -10,15 +9,12 @@ import { useAuth } from '@/lib/auth';
 import { useAuthModal } from '@/components/auth-modal';
 import {
   getRoadmapByCase,
+  createRoadmap,
   type Roadmap,
   type RoadmapFormData,
-  type SavedRoadmap,
 } from '@/lib/roadmap';
 
-const SAVED_ROADMAP_KEY = 'savedRoadmap';
-
 export default function RoadmapPage() {
-  const router = useRouter();
   const { isLoggedIn, isLoading } = useAuth();
   const { openModal } = useAuthModal();
   const promptedRef = useRef(false);
@@ -28,6 +24,7 @@ export default function RoadmapPage() {
   const [formData, setFormData] = useState<RoadmapFormData | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // 로그인 확인
   useEffect(() => {
@@ -45,6 +42,7 @@ export default function RoadmapPage() {
     setRoadmap(generatedRoadmap);
     setStep('result');
     setIsSaved(false);
+    setSaveError(null);
   };
 
   // 다시 시작
@@ -53,26 +51,29 @@ export default function RoadmapPage() {
     setRoadmap(null);
     setFormData(null);
     setIsSaved(false);
+    setSaveError(null);
   };
 
-  // 로드맵 저장 (localStorage)
-  const handleSave = () => {
-    if (!roadmap || !formData) return;
+  // 로드맵 저장 (API 호출)
+  const handleSave = async () => {
+    if (!formData) return;
 
     setIsSaving(true);
+    setSaveError(null);
 
-    // TODO: 백엔드 연동 시 API 호출로 변경
-    setTimeout(() => {
-      const savedRoadmap: SavedRoadmap = {
-        ...roadmap,
-        savedAt: new Date().toISOString(),
-        formData,
-      };
-
-      localStorage.setItem(SAVED_ROADMAP_KEY, JSON.stringify(savedRoadmap));
-      setIsSaving(false);
+    try {
+      await createRoadmap({
+        teamSize: formData.teamSize,
+        budget: formData.budget,
+        timeline: formData.period, // API에서는 timeline으로 사용
+        priority: formData.priority,
+      });
       setIsSaved(true);
-    }, 500);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : '저장에 실패했습니다.');
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -93,14 +94,21 @@ export default function RoadmapPage() {
               <RoadmapForm onSubmit={handleFormSubmit} />
             </div>
           ) : roadmap && formData ? (
-            <RoadmapResult
-              roadmap={roadmap}
-              formData={formData}
-              onReset={handleReset}
-              onSave={handleSave}
-              isSaving={isSaving}
-              isSaved={isSaved}
-            />
+            <>
+              {saveError && (
+                <div className="mb-4 rounded-lg border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
+                  {saveError}
+                </div>
+              )}
+              <RoadmapResult
+                roadmap={roadmap}
+                formData={formData}
+                onReset={handleReset}
+                onSave={handleSave}
+                isSaving={isSaving}
+                isSaved={isSaved}
+              />
+            </>
           ) : null}
         </div>
       </main>

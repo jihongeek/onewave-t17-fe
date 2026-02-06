@@ -27,11 +27,12 @@ export function CtaSection() {
           Micro Business가 아니더라도 괜찮습니다
         </h2>
         <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">
-          실사용 서비스 운영과 데이터 기록만으로도{' '}
+          실제 서비스 운영과 데이터 기록을 다루는 것으로도 {''}
           <span className="font-semibold text-foreground">
-            취업 시장에서 원하는 경력
+            취업 시장에서 원하는 인재로 {''}
           </span>
-          으로 인정받을 수 있습니다. 작은 실행이 강력한 경쟁력이 됩니다.
+          인정받을 수 있습니다.
+          <br /> 작은 실행이 강력한 경쟁력이 됩니다.
         </p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
           <Button size="lg" onClick={handleCtaClick}>
@@ -39,7 +40,7 @@ export function CtaSection() {
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>
           <Button variant="outline" size="lg" asChild>
-            <Link href="/feed">실전 리포트 보기</Link>
+            <Link href="/feed">업보트 피드 보기</Link>
           </Button>
         </div>
       </div>

@@ -26,6 +26,7 @@ export default function NewIdeaPage() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [ideaId, setIdeaId] = useState<number | null>(null);
   const [isPublishing, setIsPublishing] = useState(false);
+  const hasAnalyzed = Boolean(aiResult);
   const { isLoggedIn } = useAuth();
   const { openModal } = useAuthModal();
   const router = useRouter();
@@ -91,6 +92,11 @@ export default function NewIdeaPage() {
     }
   };
 
+  const handlePrivate = () => {
+    if (!requireLogin()) return;
+    router.push('/mypage');
+  };
+
   const handlePublish = async (
     positions: { stack: string; capacity: number }[]
   ) => {
@@ -132,8 +138,10 @@ export default function NewIdeaPage() {
               <IdeaForm
                 onAnalyze={handleAnalyze}
                 isAnalyzing={isAnalyzing}
+                onPrivate={handlePrivate}
                 onPublish={handlePublish}
                 isPublishDisabled={!aiResult || isAnalyzing || isPublishing}
+                showPublishActions={hasAnalyzed}
               />
             </div>
             <div className="lg:col-span-2">
