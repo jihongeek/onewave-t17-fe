@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { likeFeed, unlikeFeed } from "@/lib/ideas/api";
 import {
   ChevronUp,
   ChevronDown,
@@ -24,6 +25,7 @@ interface IdeaCardProps {
     tags: string[];
     teamOpen: boolean;
     createdAt: string;
+    likedByMe?: boolean;
   };
 }
 
@@ -35,25 +37,59 @@ function getScoreColor(score: number) {
 
 export function IdeaCard({ idea }: IdeaCardProps) {
   const [votes, setVotes] = useState(idea.upvotes);
-  const [voted, setVoted] = useState<"up" | "down" | null>(null);
+  const [voted, setVoted] = useState<"up" | "down" | null>(
+    idea.likedByMe ? "up" : null
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleUpvote = () => {
-    if (voted === "up") {
-      setVotes(idea.upvotes);
-      setVoted(null);
-    } else {
-      setVotes(idea.upvotes + 1);
-      setVoted("up");
+  const handleUpvote = async () => {
+    if (isSubmitting) return;
+    const feedId = Number(idea.id);
+    if (Number.isNaN(feedId)) return;
+
+    const wasLiked = voted === "up";
+    const prevVotes = votes;
+    const prevVoted = voted;
+    const nextVotes = Math.max(0, prevVotes + (wasLiked ? -1 : 1));
+    setIsSubmitting(true);
+    setVotes(nextVotes);
+    setVoted(wasLiked ? null : "up");
+
+    try {
+      if (wasLiked) {
+        await unlikeFeed(feedId);
+      } else {
+        await likeFeed(feedId);
+      }
+    } catch (error) {
+      setVotes(prevVotes);
+      setVoted(prevVoted);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDownvote = () => {
-    if (voted === "down") {
-      setVotes(idea.upvotes);
-      setVoted(null);
-    } else {
-      setVotes(idea.upvotes - 1);
-      setVoted("down");
+  const handleDownvote = async () => {
+    if (isSubmitting) return;
+    if (votes <= 0) return;
+
+    const feedId = Number(idea.id);
+    if (Number.isNaN(feedId)) return;
+    if (voted !== "up") return;
+
+    const prevVotes = votes;
+    const prevVoted = voted;
+    setIsSubmitting(true);
+    setVotes(Math.max(0, prevVotes - 1));
+    setVoted(null);
+
+    try {
+      await unlikeFeed(feedId);
+    } catch (error) {
+      setVotes(prevVotes);
+      setVoted(prevVoted);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

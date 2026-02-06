@@ -107,3 +107,27 @@ export async function listFeeds(): Promise<FeedListItemResponse[]> {
   });
   return handleResponse<FeedListItemResponse[]>(response);
 }
+
+/**
+ * 피드 좋아요
+ * POST /api/feeds/{feedId}/likes
+ */
+export async function likeFeed(feedId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds/${feedId}/likes`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  await handleResponse(response);
+}
+
+/**
+ * 피드 좋아요 취소
+ * DELETE /api/feeds/{feedId}/likes
+ */
+export async function unlikeFeed(feedId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds/${feedId}/likes`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  await handleResponse(response);
+}

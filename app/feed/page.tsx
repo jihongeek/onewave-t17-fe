@@ -19,6 +19,7 @@ type IdeaCardData = {
   tags: string[];
   teamOpen: boolean;
   createdAt: string;
+  likedByMe: boolean;
 };
 
 const CATEGORY_LABELS: Record<IdeaCategory, string> = {
@@ -62,6 +63,7 @@ function toIdeaCardData(feed: FeedListItemResponse): IdeaCardData {
     tags: [CATEGORY_LABELS[feed.category] ?? "기타"],
     teamOpen: false,
     createdAt: formatDate(feed.createdAt),
+    likedByMe: feed.likedByMe,
   };
 }
 
