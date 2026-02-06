@@ -16,9 +16,11 @@ import {
   approveFeedApplication,
   applyToFeed,
   getFeedDetail,
+  likeFeed,
   listFeedApplications,
   listFeedComments,
   rejectFeedApplication,
+  unlikeFeed,
 } from "@/lib/ideas/api";
 import type {
   FeedApplicationResponse,
@@ -61,6 +63,41 @@ function formatDate(isoString: string) {
   }).format(date);
 }
 
+const VOTE_STORAGE_KEY_PREFIX = "feed:vote:";
+const VOTE_STORAGE_TTL_MS = 5 * 60 * 1000;
+
+function readStoredVote(feedId: number) {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.sessionStorage.getItem(
+      `${VOTE_STORAGE_KEY_PREFIX}${feedId}`
+    );
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as {
+      upvotes: number;
+      likedByMe: boolean;
+      updatedAt: number;
+    };
+    if (!parsed || typeof parsed.updatedAt !== "number") return null;
+    if (Date.now() - parsed.updatedAt > VOTE_STORAGE_TTL_MS) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function persistVote(feedId: number, payload: { upvotes: number; likedByMe: boolean }) {
+  if (typeof window === "undefined") return;
+  try {
+    window.sessionStorage.setItem(
+      `${VOTE_STORAGE_KEY_PREFIX}${feedId}`,
+      JSON.stringify({ ...payload, updatedAt: Date.now() })
+    );
+  } catch {
+    // ignore storage failures
+  }
+}
+
 type TeamMember = {
   name: string;
   role: string;
@@ -84,10 +121,10 @@ export default function IdeaDetailPage() {
     number[]
   >([]);
   const [isOwner, setIsOwner] = useState(false);
-  const [baseVotes, setBaseVotes] = useState(0);
   const [votes, setVotes] = useState(0);
   const [voted, setVoted] = useState<"up" | "down" | null>(null);
   const [commentText, setCommentText] = useState("");
+  const [isVoting, setIsVoting] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -121,9 +158,21 @@ export default function IdeaDetailPage() {
         if (!isMounted) return;
 
         if (feedResult.status === "fulfilled") {
-          setFeed(feedResult.value);
-          setBaseVotes(feedResult.value.likeCount ?? 0);
-          setVotes(feedResult.value.likeCount ?? 0);
+          const nextFeed = feedResult.value;
+          setFeed(nextFeed);
+          const storedVote = readStoredVote(nextFeed.feedId);
+          const nextVotes =
+            storedVote?.upvotes ?? (nextFeed.likeCount ?? 0);
+          setVotes(nextVotes);
+          setVoted(
+            storedVote
+              ? storedVote.likedByMe
+                ? "up"
+                : null
+              : nextFeed.likedByMe
+                ? "up"
+                : null
+          );
         } else {
           throw feedResult.reason;
         }
@@ -166,10 +215,24 @@ export default function IdeaDetailPage() {
   }, [authLoading, isLoggedIn, params?.id]);
 
   useEffect(() => {
-    setBaseVotes(0);
-    setVotes(0);
-    setVoted(null);
-  }, [feed?.feedId]);
+    if (!feed) {
+      setVotes(0);
+      setVoted(null);
+      return;
+    }
+    const storedVote = readStoredVote(feed.feedId);
+    const nextVotes = storedVote?.upvotes ?? (feed.likeCount ?? 0);
+    setVotes(nextVotes);
+    setVoted(
+      storedVote
+        ? storedVote.likedByMe
+          ? "up"
+          : null
+        : feed.likedByMe
+          ? "up"
+          : null
+    );
+  }, [feed?.feedId, feed?.likeCount, feed?.likedByMe]);
 
   const requireLogin = useCallback(() => {
     if (isLoggedIn) return true;
@@ -195,6 +258,93 @@ export default function IdeaDetailPage() {
       .finally(() => {
         setIsSubmittingComment(false);
       });
+  };
+
+  const handleUpvote = async () => {
+    if (isVoting) return;
+    if (!requireLogin()) return;
+    if (!feed) return;
+
+    const wasLiked = voted === "up";
+    const prevVotes = votes;
+    const prevVoted = voted;
+    const nextVotes = Math.max(0, prevVotes + (wasLiked ? -1 : 1));
+    setIsVoting(true);
+    setVotes(nextVotes);
+    setVoted(wasLiked ? null : "up");
+    setFeed((prev) =>
+      prev
+        ? { ...prev, likeCount: nextVotes, likedByMe: !wasLiked }
+        : prev
+    );
+    persistVote(feed.feedId, { upvotes: nextVotes, likedByMe: !wasLiked });
+
+    try {
+      if (wasLiked) {
+        await unlikeFeed(feed.feedId);
+      } else {
+        await likeFeed(feed.feedId);
+      }
+    } catch {
+      setVotes(prevVotes);
+      setVoted(prevVoted);
+      setFeed((prev) =>
+        prev
+          ? {
+              ...prev,
+              likeCount: prevVotes,
+              likedByMe: prevVoted === "up",
+            }
+          : prev
+      );
+      persistVote(feed.feedId, {
+        upvotes: prevVotes,
+        likedByMe: prevVoted === "up",
+      });
+    } finally {
+      setIsVoting(false);
+    }
+  };
+
+  const handleDownvote = async () => {
+    if (isVoting) return;
+    if (!requireLogin()) return;
+    if (!feed) return;
+    if (votes <= 0) return;
+    if (voted !== "up") return;
+
+    const prevVotes = votes;
+    const prevVoted = voted;
+    const nextVotes = Math.max(0, prevVotes - 1);
+    setIsVoting(true);
+    setVotes(nextVotes);
+    setVoted(null);
+    setFeed((prev) =>
+      prev ? { ...prev, likeCount: nextVotes, likedByMe: false } : prev
+    );
+    persistVote(feed.feedId, { upvotes: nextVotes, likedByMe: false });
+
+    try {
+      await unlikeFeed(feed.feedId);
+    } catch {
+      setVotes(prevVotes);
+      setVoted(prevVoted);
+      setFeed((prev) =>
+        prev
+          ? {
+              ...prev,
+              likeCount: prevVotes,
+              likedByMe: prevVoted === "up",
+            }
+          : prev
+      );
+      persistVote(feed.feedId, {
+        upvotes: prevVotes,
+        likedByMe: prevVoted === "up",
+      });
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   const handleApplyToTeam = () => {
@@ -366,14 +516,7 @@ export default function IdeaDetailPage() {
                   <div className="flex flex-col items-center gap-0.5">
                     <button
                       type="button"
-                      onClick={() => {
-                        setVoted(voted === "up" ? null : "up");
-                        setVotes(
-                          voted === "up"
-                            ? baseVotes
-                            : baseVotes + 1
-                        );
-                      }}
+                      onClick={handleUpvote}
                       className={`rounded-md p-1 transition-colors ${
                         voted === "up"
                           ? "text-primary"
@@ -388,14 +531,7 @@ export default function IdeaDetailPage() {
                     </span>
                     <button
                       type="button"
-                      onClick={() => {
-                        setVoted(voted === "down" ? null : "down");
-                        setVotes(
-                          voted === "down"
-                            ? baseVotes
-                            : baseVotes - 1
-                        );
-                      }}
+                      onClick={handleDownvote}
                       className={`rounded-md p-1 transition-colors ${
                         voted === "down"
                           ? "text-destructive"
