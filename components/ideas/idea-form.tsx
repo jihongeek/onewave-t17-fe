@@ -32,19 +32,11 @@ export function IdeaForm({
   isPublishDisabled = false,
   showPublishActions = false,
 }: IdeaFormProps) {
-  const [title, setTitle] = useState("AI 기반 개인 건강 관리 챗봇");
-  const [problem, setProblem] = useState(
-    "바쁜 현대인들이 건강 관리에 소홀해지는 문제. 병원 방문 전 간단한 증상 확인과 건강 상담이 어려운 상황."
-  );
-  const [targetCustomer, setTargetCustomer] = useState(
-    "25-45세 직장인, 건강에 관심 있지만 시간이 부족한 도시 거주자"
-  );
-  const [solution, setSolution] = useState(
-    "AI 챗봇을 통한 24시간 건강 상담, 증상 분석, 건강 습관 추적 및 맞춤형 건강 조언 제공."
-  );
-  const [differentiation, setDifferentiation] = useState(
-    "기존 건강 앱과 달리 대화형 AI를 통해 개인화된 상담 제공. 의료 데이터 기반 정확한 분석과 병원 연계 시스템."
-  );
+  const [title, setTitle] = useState("");
+  const [problem, setProblem] = useState("");
+  const [targetCustomer, setTargetCustomer] = useState("");
+  const [solution, setSolution] = useState("");
+  const [differentiation, setDifferentiation] = useState("");
   const [category, setCategory] =
     useState<IdeaCreateRequest["category"]>("HEALTHCARE");
   const [stage, setStage] = useState<IdeaCreateRequest["stage"]>("IDEA");
@@ -109,7 +101,7 @@ export function IdeaForm({
           <Label htmlFor="title">아이디어 제목</Label>
           <Input
             id="title"
-            placeholder="한 줄로 요약해 주세요"
+            placeholder="예: AI로 맞춤형 식단을 추천하는 앱"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -119,7 +111,7 @@ export function IdeaForm({
           <Label htmlFor="problem">해결하려는 문제</Label>
           <Textarea
             id="problem"
-            placeholder="어떤 문제를 해결하고자 하나요?"
+            placeholder="예: 바쁜 직장인이 식단 관리를 지속하기 어려움"
             rows={3}
             value={problem}
             onChange={(e) => setProblem(e.target.value)}
@@ -130,7 +122,7 @@ export function IdeaForm({
           <Label htmlFor="target">타겟 고객</Label>
           <Input
             id="target"
-            placeholder="주요 타겟 고객층을 설명해 주세요"
+            placeholder="예: 20~40대 직장인, 건강 관리 니즈가 있는 사용자"
             value={targetCustomer}
             onChange={(e) => setTargetCustomer(e.target.value)}
           />
@@ -140,7 +132,7 @@ export function IdeaForm({
           <Label htmlFor="solution">해결 방안</Label>
           <Textarea
             id="solution"
-            placeholder="아이디어의 핵심 해결 방안을 설명해 주세요"
+            placeholder="예: 개인 선호와 건강 데이터를 기반으로 식단/운동을 제안"
             rows={3}
             value={solution}
             onChange={(e) => setSolution(e.target.value)}
@@ -151,7 +143,7 @@ export function IdeaForm({
           <Label htmlFor="differentiator">차별성</Label>
           <Textarea
             id="differentiator"
-            placeholder="기존 솔루션과의 차별 포인트를 설명해 주세요"
+            placeholder="예: 실시간 피드백과 챌린지 기능으로 지속 사용 유도"
             rows={3}
             value={differentiation}
             onChange={(e) => setDifferentiation(e.target.value)}
