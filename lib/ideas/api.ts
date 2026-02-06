@@ -109,13 +109,26 @@ export async function createFeed(
 }
 
 /**
- * 피드 목록 조회
+ * 피드 목록 조회 (공개 API - 로그인 없이도 조회 가능)
  * GET /api/feeds
  */
 export async function listFeeds(): Promise<FeedListItemResponse[]> {
+  // 토큰이 있으면 포함 (likedByMe 정보를 위해), 없으면 공개 조회
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+  };
+
+  // 토큰이 있을 때만 Authorization 헤더 추가
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(`${API_BASE_URL}/api/feeds`, {
     method: 'GET',
-    headers: getAuthHeaders(),
+    headers,
   });
   return handleResponse<FeedListItemResponse[]>(response);
 }
