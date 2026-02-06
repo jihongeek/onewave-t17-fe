@@ -11,8 +11,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { useAuthModal } from "@/components/auth-modal";
-import { getFeedDetail } from "@/lib/ideas/api";
-import type { FeedDetailResponse, IdeaCategory } from "@/lib/ideas/types";
+import { addFeedComment, getFeedDetail, listFeedComments } from "@/lib/ideas/api";
+import type {
+  FeedCommentResponse,
+  FeedDetailResponse,
+  IdeaCategory,
+} from "@/lib/ideas/types";
 import {
   ChevronUp,
   ChevronDown,
@@ -45,14 +49,6 @@ function formatDate(isoString: string) {
   }).format(date);
 }
 
-type CommentItem = {
-  id: string;
-  author: string;
-  profileImageUrl?: string;
-  text: string;
-  createdAt: string;
-};
-
 type TeamMember = {
   name: string;
   role: string;
@@ -64,8 +60,10 @@ export default function IdeaDetailPage() {
   const { isLoggedIn, isLoading: authLoading } = useAuth();
   const { openModal } = useAuthModal();
   const [feed, setFeed] = useState<FeedDetailResponse | null>(null);
+  const [comments, setComments] = useState<FeedCommentResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
   const [baseVotes, setBaseVotes] = useState(0);
   const [votes, setVotes] = useState(0);
   const [voted, setVoted] = useState<"up" | "down" | null>(null);
@@ -93,11 +91,26 @@ export default function IdeaDetailPage() {
       setIsLoading(true);
       setErrorMessage(null);
       try {
-        const feedResult = await getFeedDetail(parsedId);
+        const [feedResult, commentResult] = await Promise.allSettled([
+          getFeedDetail(parsedId),
+          listFeedComments(parsedId),
+        ]);
+
         if (!isMounted) return;
-        setFeed(feedResult);
-        setBaseVotes(feedResult.likeCount ?? 0);
-        setVotes(feedResult.likeCount ?? 0);
+
+        if (feedResult.status === "fulfilled") {
+          setFeed(feedResult.value);
+          setBaseVotes(feedResult.value.likeCount ?? 0);
+          setVotes(feedResult.value.likeCount ?? 0);
+        } else {
+          throw feedResult.reason;
+        }
+
+        if (commentResult.status === "fulfilled") {
+          setComments(commentResult.value);
+        } else {
+          setComments([]);
+        }
       } catch (error) {
         if (!isMounted) return;
         setErrorMessage(
@@ -106,6 +119,7 @@ export default function IdeaDetailPage() {
             : "피드를 불러오지 못했습니다."
         );
         setFeed(null);
+        setComments([]);
       } finally {
         if (isMounted) {
           setIsLoading(false);
@@ -134,6 +148,23 @@ export default function IdeaDetailPage() {
 
   const handleCommentSubmit = () => {
     if (!requireLogin()) return;
+    const content = commentText.trim();
+    if (!content || !feed) return;
+
+    setIsSubmittingComment(true);
+    addFeedComment(feed.feedId, { content })
+      .then((created) => {
+        setComments((prev) => [created, ...prev]);
+        setCommentText("");
+      })
+      .catch((error) => {
+        const message =
+          error instanceof Error ? error.message : "댓글 작성에 실패했습니다.";
+        alert(message);
+      })
+      .finally(() => {
+        setIsSubmittingComment(false);
+      });
   };
 
   if (authLoading || isLoading) {
@@ -220,7 +251,6 @@ export default function IdeaDetailPage() {
     improvements.length > 0 ? improvements : ["보완점 정보가 제공되지 않았습니다."];
   const teamMembers: TeamMember[] = [];
   const openRoles: string[] = [];
-  const comments: CommentItem[] = [];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -364,7 +394,7 @@ export default function IdeaDetailPage() {
                     <div className="flex justify-end">
                       <Button
                         size="sm"
-                        disabled={!commentText.trim()}
+                        disabled={!commentText.trim() || isSubmittingComment}
                         onClick={handleCommentSubmit}
                       >
                         <Send className="mr-1.5 h-3.5 w-3.5" />
@@ -377,35 +407,40 @@ export default function IdeaDetailPage() {
                 <div className="flex flex-col gap-4">
                   {comments.map((comment) => (
                     <div
-                      key={comment.id}
+                      key={comment.commentId}
                       className="flex gap-3 rounded-lg border border-border p-4"
                     >
                       <Avatar className="h-8 w-8 flex-shrink-0">
-                    {comment.profileImageUrl && (
+                    {comment.authorProfileImageUrl && (
                       <AvatarImage
-                        src={comment.profileImageUrl}
-                        alt={comment.author}
+                        src={comment.authorProfileImageUrl}
+                        alt={comment.authorName}
                       />
                     )}
                         <AvatarFallback className="bg-secondary text-xs">
-                      {comment.author.charAt(0)}
+                      {comment.authorName.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
                         <div className="flex items-center gap-2 text-sm">
                           <span className="font-medium text-foreground">
-                            {comment.author}
+                            {comment.authorName}
                           </span>
                           <span className="text-xs text-muted-foreground">
-                            {comment.createdAt}
+                            {formatDate(comment.createdAt)}
                           </span>
                         </div>
                         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                          {comment.text}
+                          {comment.content}
                         </p>
                       </div>
                     </div>
                   ))}
+                  {comments.length === 0 && (
+                    <div className="rounded-lg border border-border bg-secondary/30 p-4 text-sm text-muted-foreground">
+                      아직 등록된 댓글이 없습니다.
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

@@ -31,6 +31,10 @@ export interface FeedCreateRequest {
   }[];
 }
 
+export interface FeedCommentRequest {
+  content: string;
+}
+
 // ==================== Response Types ====================
 export interface IdeaResponse {
   ideaId: number;
@@ -80,6 +84,14 @@ export interface FeedDetailResponse {
   improvements1?: string;
   improvements2?: string;
   createdAt: string;
+}
+
+export interface FeedCommentResponse {
+  commentId: number;
+  authorName: string;
+  authorProfileImageUrl?: string;
+  createdAt: string;
+  content: string;
 }
 
 export interface FeedListItemResponse {

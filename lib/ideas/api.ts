@@ -1,6 +1,8 @@
 // Idea & AI Analysis API Functions - Based on swagger.json
 import type {
   AiAnalysisResponse,
+  FeedCommentRequest,
+  FeedCommentResponse,
   FeedCreateRequest,
   FeedDetailResponse,
   FeedListItemResponse,
@@ -157,6 +159,36 @@ export async function getFeedDetail(
     headers: getAuthHeaders(),
   });
   return handleResponse<FeedDetailResponse>(response);
+}
+
+/**
+ * 피드 댓글 목록 조회
+ * GET /api/feeds/{feedId}/comments
+ */
+export async function listFeedComments(
+  feedId: number
+): Promise<FeedCommentResponse[]> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds/${feedId}/comments`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<FeedCommentResponse[]>(response);
+}
+
+/**
+ * 피드 댓글 작성
+ * POST /api/feeds/{feedId}/comments
+ */
+export async function addFeedComment(
+  feedId: number,
+  data: FeedCommentRequest
+): Promise<FeedCommentResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds/${feedId}/comments`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<FeedCommentResponse>(response);
 }
 
 /**
