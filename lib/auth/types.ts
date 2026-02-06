@@ -43,6 +43,10 @@ export interface UpdateUserRequest {
   gender?: Gender;
 }
 
+export interface ProfileImageUpdateRequest {
+  imageUrl: string;
+}
+
 // ==================== Response Types ====================
 export interface MessageResponse {
   message: string;
@@ -63,6 +67,11 @@ export interface UserResponse {
   name: string;
   birthDate?: string;
   gender?: Gender;
+  profileImageUrl?: string;
+}
+
+export interface ProfileImageUploadResponse {
+  imageUrl: string;
 }
 
 // ==================== Error Types ====================

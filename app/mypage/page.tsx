@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import { Footer } from '@/components/footer';
-import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -46,6 +46,8 @@ import {
   deleteMe,
   requestPasswordChangeEmail,
   changePassword,
+  uploadProfileImage,
+  setProfileImage,
 } from '@/lib/auth';
 import type { Gender, UpdateUserRequest } from '@/lib/auth';
 
@@ -104,8 +106,13 @@ export default function MyPage() {
 
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImageSaving, setIsImageSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
+  const [profileImagePreview, setProfileImagePreview] = useState<string | null>(
+    null
+  );
 
   // 프로필 수정 폼
   const [editForm, setEditForm] = useState<UpdateUserRequest>({
@@ -141,6 +148,19 @@ export default function MyPage() {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!profileImageFile) {
+      setProfileImagePreview(user?.profileImageUrl || null);
+    }
+  }, [user?.profileImageUrl, profileImageFile]);
+
+  useEffect(() => {
+    if (!profileImageFile) return;
+    const objectUrl = URL.createObjectURL(profileImageFile);
+    setProfileImagePreview(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [profileImageFile]);
+
   // 로그인 안 되어 있으면 리다이렉트
   useEffect(() => {
     if (!authLoading && !isLoggedIn) {
@@ -165,6 +185,27 @@ export default function MyPage() {
       );
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const handleSaveProfileImage = async () => {
+    if (!profileImageFile) return;
+    setIsImageSaving(true);
+    setError(null);
+
+    try {
+      const uploadResult = await uploadProfileImage(profileImageFile);
+      await setProfileImage({ imageUrl: uploadResult.imageUrl });
+      await refreshUser();
+      setProfileImageFile(null);
+      setSuccessMessage('프로필 사진이 업데이트되었습니다.');
+      setTimeout(() => setSuccessMessage(null), 3000);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : '프로필 사진 변경에 실패했습니다.'
+      );
+    } finally {
+      setIsImageSaving(false);
     }
   };
 
@@ -274,6 +315,9 @@ export default function MyPage() {
           {/* 프로필 헤더 */}
           <div className="mb-8 flex flex-col items-center gap-6 rounded-2xl border border-border bg-card p-8 md:flex-row md:items-start">
             <Avatar className="h-20 w-20">
+              {user.profileImageUrl && (
+                <AvatarImage src={user.profileImageUrl} alt={user.name} />
+              )}
               <AvatarFallback className="bg-primary text-2xl text-primary-foreground">
                 {user.name?.charAt(0).toUpperCase() || 'U'}
               </AvatarFallback>
@@ -293,8 +337,8 @@ export default function MyPage() {
                   {user.gender === 'MALE'
                     ? '남성'
                     : user.gender === 'FEMALE'
-                      ? '여성'
-                      : '기타'}
+                    ? '여성'
+                    : '기타'}
                 </Badge>
               )}
               <div className="mt-4 flex flex-wrap justify-center gap-6 md:justify-start">
@@ -330,6 +374,42 @@ export default function MyPage() {
               <h2 className="mb-4 text-lg font-semibold text-foreground">
                 프로필 수정
               </h2>
+              <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center">
+                <Avatar className="h-16 w-16">
+                  {profileImagePreview && (
+                    <AvatarImage src={profileImagePreview} alt={user.name} />
+                  )}
+                  <AvatarFallback className="bg-primary text-xl text-primary-foreground">
+                    {user.name?.charAt(0).toUpperCase() || 'U'}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="profile-image">프로필 사진</Label>
+                  <Input
+                    id="profile-image"
+                    type="file"
+                    accept="image/*"
+                    onChange={e =>
+                      setProfileImageFile(e.target.files?.[0] || null)
+                    }
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSaveProfileImage}
+                    disabled={!profileImageFile || isImageSaving}
+                  >
+                    {isImageSaving ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        업로드 중...
+                      </>
+                    ) : (
+                      '프로필 사진 저장'
+                    )}
+                  </Button>
+                </div>
+              </div>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="flex flex-col gap-2">
                   <Label htmlFor="edit-name">이름</Label>

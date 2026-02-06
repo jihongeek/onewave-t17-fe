@@ -2,27 +2,27 @@ export function HowItWorksSection() {
   const steps = [
     {
       step: "01",
-      title: "아이디어 등록",
+      title: "마이크로 비즈니스 설계",
       description:
-        "문제, 타겟 고객, 해결 방안, 차별성 등을 입력하면 AI가 분석을 시작합니다.",
+        "해결할 문제와 수익 구조를 정의하고, 작게 시작할 모델을 만듭니다.",
     },
     {
       step: "02",
-      title: "AI 점수 확인",
+      title: "실행 & 운영 로그",
       description:
-        "AI가 시장성, 혁신성, 실현 가능성을 종합 분석하여 점수와 피드백을 제공합니다.",
+        "실제 고객 대응과 매출 테스트를 수행하며 운영 데이터를 축적합니다.",
     },
     {
       step: "03",
-      title: "커뮤니티 검증",
+      title: "실전 리포트 생성",
       description:
-        "다른 사용자들의 업보트와 댓글로 아이디어의 시장 반응을 미리 확인합니다.",
+        "활동 로그를 AI가 분석해 시장성과 실행력을 증명합니다.",
     },
     {
       step: "04",
-      title: "팀 빌딩 & 실행",
+      title: "확장 & 전환",
       description:
-        "팀원을 모집하고 자금 로드맵을 작성하여 아이디어를 현실로 만들어 보세요.",
+        "성과가 보이면 기능 확장과 자동화로 Micro Business 전환을 가속합니다.",
     },
   ];
 
@@ -31,10 +31,10 @@ export function HowItWorksSection() {
       <div className="mx-auto max-w-7xl">
         <div className="mx-auto max-w-2xl text-center">
           <h2 className="text-balance text-3xl font-bold tracking-tight text-foreground md:text-4xl">
-            간단한 4단계로 시작하세요
+            Micro Business로 가는 4단계
           </h2>
           <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">
-            아이디어 등록부터 실행까지, 체계적인 프로세스를 통해 안내합니다
+            작게 검증하고 빠르게 성장시키는 실전 프로세스를 제공합니다
           </p>
         </div>
 

@@ -4,11 +4,12 @@ import { Inter } from 'next/font/google';
 
 import './globals.css';
 import { AuthProvider } from '@/lib/auth';
+import { AuthModalProvider } from '@/components/auth-modal';
 
 const _inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
-  title: 'OneWave',
+  title: 'Mavis',
   description:
     'Submit your startup ideas, get AI-powered scoring and feedback, join community upvote threads, build teams, and plan your initial funding roadmap.',
 };
@@ -25,7 +26,9 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body className="font-sans antialiased">
-        <AuthProvider>{children}</AuthProvider>
+        <AuthProvider>
+          <AuthModalProvider>{children}</AuthModalProvider>
+        </AuthProvider>
       </body>
     </html>
   );

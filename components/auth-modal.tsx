@@ -1,6 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,14 +29,33 @@ import {
   signup,
 } from '@/lib/auth';
 
-export function AuthModal() {
+interface AuthModalProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  hideTrigger?: boolean;
+}
+
+interface AuthModalContextValue {
+  open: boolean;
+  openModal: () => void;
+  setOpen: (open: boolean) => void;
+}
+
+const AuthModalContext = createContext<AuthModalContextValue | undefined>(
+  undefined
+);
+
+function AuthModal({ open, onOpenChange, hideTrigger }: AuthModalProps) {
   const { login: authLogin } = useAuth();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>('login');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const isControlled = open !== undefined && onOpenChange !== undefined;
+  const dialogOpen = isControlled ? open : internalOpen;
+  const setDialogOpen = isControlled ? onOpenChange : setInternalOpen;
 
   // 로그인 폼 상태
   const [loginForm, setLoginForm] = useState({
@@ -176,25 +202,27 @@ export function AuthModal() {
 
   // 다이얼로그 열기/닫기 핸들러
   const handleOpenChange = (isOpen: boolean) => {
-    setOpen(isOpen);
+    setDialogOpen(isOpen);
     if (!isOpen) {
       resetForms();
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <LogIn className="mr-1.5 h-4 w-4" />
-          로그인
-        </Button>
-      </DialogTrigger>
+    <Dialog open={dialogOpen} onOpenChange={handleOpenChange}>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <LogIn className="mr-1.5 h-4 w-4" />
+            로그인
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle>환영합니다!</DialogTitle>
           <DialogDescription>
-            OneWave에 로그인하거나 새 계정을 만들어보세요.
+            Mavis에 로그인하거나 새 계정을 만들어보세요.
           </DialogDescription>
         </DialogHeader>
 
@@ -415,5 +443,43 @@ export function AuthModal() {
         </Tabs>
       </DialogContent>
     </Dialog>
+  );
+}
+
+export function AuthModalProvider({ children }: { children: ReactNode }) {
+  const [open, setOpen] = useState(false);
+  const openModal = useCallback(() => setOpen(true), []);
+  const value = useMemo(
+    () => ({
+      open,
+      setOpen,
+      openModal,
+    }),
+    [open, openModal]
+  );
+
+  return (
+    <AuthModalContext.Provider value={value}>
+      {children}
+      <AuthModal open={open} onOpenChange={setOpen} hideTrigger />
+    </AuthModalContext.Provider>
+  );
+}
+
+export function useAuthModal() {
+  const context = useContext(AuthModalContext);
+  if (!context) {
+    throw new Error('useAuthModal must be used within AuthModalProvider');
+  }
+  return context;
+}
+
+export function AuthModalButton() {
+  const { openModal } = useAuthModal();
+  return (
+    <Button variant="ghost" size="sm" onClick={openModal}>
+      <LogIn className="mr-1.5 h-4 w-4" />
+      로그인
+    </Button>
   );
 }

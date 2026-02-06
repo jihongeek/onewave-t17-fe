@@ -15,6 +15,10 @@
   ],
   "tags": [
     {
+      "name": "Gemini Test",
+      "description": "Simple test endpoint for Gemini API"
+    },
+    {
       "name": "User",
       "description": "My page and user profile API"
     },
@@ -24,6 +28,47 @@
     }
   ],
   "paths": {
+    "/api/users/me/profile-image/upload": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Upload profile image",
+        "description": "Upload profile image file and return its URL",
+        "operationId": "uploadProfileImage",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": ["file"],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProfileImageUploadResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/users/me/password/email": {
       "post": {
         "tags": ["User"],
@@ -47,6 +92,36 @@
             "bearerAuth": []
           }
         ]
+      }
+    },
+    "/api/test/gemini": {
+      "post": {
+        "tags": ["Gemini Test"],
+        "summary": "Test Gemini",
+        "description": "Send a prompt to Gemini and return the first text response",
+        "operationId": "test",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GeminiTestRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeminiTestResponse"
+                }
+              }
+            }
+          }
+        }
       }
     },
     "/api/auth/signup": {
@@ -132,6 +207,36 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/signup/email/check": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Check email availability",
+        "description": "Check if the email is available for signup",
+        "operationId": "checkSignupEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailCheckResponse"
                 }
               }
             }
@@ -309,6 +414,41 @@
         ]
       }
     },
+    "/api/users/me/profile-image": {
+      "patch": {
+        "tags": ["User"],
+        "summary": "Set profile image",
+        "description": "Set profile image URL for current user",
+        "operationId": "setProfileImage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProfileImageUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
     "/api/users/me/password": {
       "patch": {
         "tags": ["User"],
@@ -347,10 +487,35 @@
   },
   "components": {
     "schemas": {
+      "ProfileImageUploadResponse": {
+        "type": "object",
+        "properties": {
+          "imageUrl": {
+            "type": "string"
+          }
+        }
+      },
       "MessageResponse": {
         "type": "object",
         "properties": {
           "message": {
+            "type": "string"
+          }
+        }
+      },
+      "GeminiTestRequest": {
+        "required": ["prompt"],
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string"
+          }
+        }
+      },
+      "GeminiTestResponse": {
+        "type": "object",
+        "properties": {
+          "text": {
             "type": "string"
           }
         }
@@ -408,6 +573,14 @@
           },
           "code": {
             "type": "string"
+          }
+        }
+      },
+      "EmailCheckResponse": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
           }
         }
       },
@@ -485,6 +658,18 @@
           "gender": {
             "type": "string",
             "enum": ["MALE", "FEMALE", "OTHER"]
+          },
+          "profileImageUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "ProfileImageUpdateRequest": {
+        "required": ["imageUrl"],
+        "type": "object",
+        "properties": {
+          "imageUrl": {
+            "type": "string"
           }
         }
       },

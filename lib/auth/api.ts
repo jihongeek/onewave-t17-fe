@@ -9,6 +9,9 @@ import type {
   SignupResponse,
   MessageResponse,
   UserResponse,
+  UpdateUserRequest,
+  ProfileImageUploadResponse,
+  ProfileImageUpdateRequest,
 } from './types';
 
 const API_BASE_URL =
@@ -146,9 +149,7 @@ export async function getMe(): Promise<UserResponse> {
  * 내 프로필 수정
  * PATCH /api/users/me
  */
-export async function updateMe(
-  data: Partial<UserResponse>
-): Promise<UserResponse> {
+export async function updateMe(data: UpdateUserRequest): Promise<UserResponse> {
   const response = await fetch(`${API_BASE_URL}/api/users/me`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
@@ -190,6 +191,46 @@ export async function changePassword(data: {
   newPassword: string;
 }): Promise<MessageResponse> {
   const response = await fetch(`${API_BASE_URL}/api/users/me/password`, {
+    method: 'PATCH',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<MessageResponse>(response);
+}
+
+/**
+ * 프로필 이미지 업로드
+ * POST /api/users/me/profile-image/upload
+ */
+export async function uploadProfileImage(
+  file: File
+): Promise<ProfileImageUploadResponse> {
+  const formData = new FormData();
+  formData.append('file', file);
+
+  const token =
+    typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+  const response = await fetch(
+    `${API_BASE_URL}/api/users/me/profile-image/upload`,
+    {
+      method: 'POST',
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    }
+  );
+  return handleResponse<ProfileImageUploadResponse>(response);
+}
+
+/**
+ * 프로필 이미지 설정
+ * PATCH /api/users/me/profile-image
+ */
+export async function setProfileImage(
+  data: ProfileImageUpdateRequest
+): Promise<MessageResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/users/me/profile-image`, {
     method: 'PATCH',
     headers: getAuthHeaders(),
     body: JSON.stringify(data),

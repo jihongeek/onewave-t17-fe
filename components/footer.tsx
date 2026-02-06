@@ -1,15 +1,31 @@
+'use client';
+
 import Link from 'next/link';
+import type { MouseEvent } from 'react';
+import { useAuth } from '@/lib/auth';
+import { useAuthModal } from '@/components/auth-modal';
 
 export function Footer() {
+  const { isLoggedIn } = useAuth();
+  const { openModal } = useAuthModal();
+
+  const handleProtectedClick = (
+    event: MouseEvent<HTMLElement>,
+    requiresAuth?: boolean
+  ) => {
+    if (!requiresAuth || isLoggedIn) return;
+    event.preventDefault();
+    alert('로그인이 필요한 기능입니다');
+    openModal();
+  };
+
   return (
     <footer className="border-t border-border bg-card">
       <div className="mx-auto max-w-7xl px-4 py-12 lg:px-8">
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2">
-              <span className="text-lg font-bold text-foreground">
-                IdeaForge
-              </span>
+              <span className="text-lg font-bold text-foreground">Mavis</span>
             </Link>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
               AI 기반 아이디어 검증 플랫폼으로 당신의 스타트업 아이디어를 현실로
@@ -26,6 +42,7 @@ export function Footer() {
                 <Link
                   href="/ideas/new"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                  onClick={event => handleProtectedClick(event, true)}
                 >
                   아이디어 등록
                 </Link>
@@ -42,6 +59,7 @@ export function Footer() {
                 <Link
                   href="/roadmap"
                   className="text-sm text-muted-foreground transition-colors hover:text-primary"
+                  onClick={event => handleProtectedClick(event, true)}
                 >
                   자금 로드맵
                 </Link>
@@ -99,7 +117,7 @@ export function Footer() {
 
         <div className="mt-10 border-t border-border pt-6">
           <p className="text-center text-xs text-muted-foreground">
-            &copy; 2026 IdeaForge. All rights reserved.
+            &copy; 2026 Mavis. All rights reserved.
           </p>
         </div>
       </div>

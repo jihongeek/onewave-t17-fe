@@ -1,29 +1,41 @@
 'use client';
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, type MouseEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Lightbulb, Menu, X, TrendingUp, Map, User } from 'lucide-react';
-import { AuthModal } from '@/components/auth-modal';
+import { AuthModalButton, useAuthModal } from '@/components/auth-modal';
 import { useAuth } from '@/lib/auth';
 
 // 마이페이지 제외한 navLinks (마이페이지는 로그인 후 아이콘으로 표시)
 const navLinks = [
-  { href: '/ideas/new', label: 'AI 분석', icon: Lightbulb },
+  { href: '/ideas/new', label: 'AI 분석', icon: Lightbulb, requiresAuth: true },
   { href: '/feed', label: '업보트 피드', icon: TrendingUp },
-  { href: '/roadmap', label: '로드맵', icon: Map },
+  { href: '/roadmap', label: '로드맵', icon: Map, requiresAuth: true },
 ];
 
 export function Navbar() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isLoggedIn, isLoading, user } = useAuth();
+  const { openModal } = useAuthModal();
+
+  const handleProtectedClick = (
+    event: MouseEvent<HTMLElement>,
+    requiresAuth?: boolean
+  ) => {
+    if (!requiresAuth || isLoggedIn) return true;
+    event.preventDefault();
+    alert('로그인이 필요한 기능입니다');
+    openModal();
+    return false;
+  };
 
   return (
     <header className="sticky top-0 z-50 border-b border-border bg-card/80 backdrop-blur-md">
       <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-3 lg:px-8">
         <Link href="/" className="flex items-center gap-2">
           <span className="text-xl font-bold tracking-tight text-foreground">
-            OneWave
+            Mavis
           </span>
         </Link>
 
@@ -35,6 +47,7 @@ export function Navbar() {
                 key={link.href}
                 href={link.href}
                 className="rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                onClick={event => handleProtectedClick(event, link.requiresAuth)}
               >
                 {link.label}
               </Link>
@@ -59,7 +72,7 @@ export function Navbar() {
               </>
             ) : (
               // 비로그인 상태: 로그인 모달 버튼
-              <AuthModal />
+              <AuthModalButton />
             )}
           </div>
         </div>
@@ -88,7 +101,15 @@ export function Navbar() {
                   key={link.href}
                   href={link.href}
                   className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
-                  onClick={() => setMobileOpen(false)}
+                  onClick={event => {
+                    const canNavigate = handleProtectedClick(
+                      event,
+                      link.requiresAuth
+                    );
+                    if (canNavigate) {
+                      setMobileOpen(false);
+                    }
+                  }}
                 >
                   <Icon className="h-4 w-4" />
                   {link.label}
@@ -117,7 +138,7 @@ export function Navbar() {
               </span>
             ) : (
               // 모바일: 비로그인 상태 - 로그인 모달
-              <AuthModal />
+              <AuthModalButton />
             )}
           </div>
         </div>

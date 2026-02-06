@@ -35,9 +35,7 @@ export default function SignupPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Lightbulb className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">
-                IdeaForge
-              </span>
+              <span className="text-xl font-bold text-foreground">Mavis</span>
             </Link>
             <h1 className="mt-4 text-2xl font-bold text-foreground">
               회원가입
