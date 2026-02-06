@@ -3,6 +3,7 @@ import type {
   AiAnalysisResponse,
   FeedCreateRequest,
   FeedDetailResponse,
+  FeedListItemResponse,
   IdeaCreateRequest,
   IdeaResponse,
 } from './types';
@@ -93,4 +94,40 @@ export async function createFeed(
     body: JSON.stringify(data),
   });
   return handleResponse<FeedDetailResponse>(response);
+}
+
+/**
+ * 피드 목록 조회
+ * GET /api/feeds
+ */
+export async function listFeeds(): Promise<FeedListItemResponse[]> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<FeedListItemResponse[]>(response);
+}
+
+/**
+ * 피드 좋아요
+ * POST /api/feeds/{feedId}/likes
+ */
+export async function likeFeed(feedId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds/${feedId}/likes`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+  });
+  await handleResponse(response);
+}
+
+/**
+ * 피드 좋아요 취소
+ * DELETE /api/feeds/{feedId}/likes
+ */
+export async function unlikeFeed(feedId: number): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds/${feedId}/likes`, {
+    method: 'DELETE',
+    headers: getAuthHeaders(),
+  });
+  await handleResponse(response);
 }

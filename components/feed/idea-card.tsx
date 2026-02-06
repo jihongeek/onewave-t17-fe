@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { likeFeed, unlikeFeed } from "@/lib/ideas/api";
 import {
   ChevronUp,
   ChevronDown,
@@ -24,7 +25,13 @@ interface IdeaCardProps {
     tags: string[];
     teamOpen: boolean;
     createdAt: string;
+    likedByMe?: boolean;
   };
+  onVoteChange?: (payload: {
+    ideaId: string;
+    upvotes: number;
+    likedByMe: boolean;
+  }) => void;
 }
 
 function getScoreColor(score: number) {
@@ -33,27 +40,85 @@ function getScoreColor(score: number) {
   return "text-destructive";
 }
 
-export function IdeaCard({ idea }: IdeaCardProps) {
+export function IdeaCard({ idea, onVoteChange }: IdeaCardProps) {
   const [votes, setVotes] = useState(idea.upvotes);
-  const [voted, setVoted] = useState<"up" | "down" | null>(null);
+  const [voted, setVoted] = useState<"up" | "down" | null>(
+    idea.likedByMe ? "up" : null
+  );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  useEffect(() => {
+    setVotes(idea.upvotes);
+    setVoted(idea.likedByMe ? "up" : null);
+  }, [idea.likedByMe, idea.upvotes]);
 
-  const handleUpvote = () => {
-    if (voted === "up") {
-      setVotes(idea.upvotes);
-      setVoted(null);
-    } else {
-      setVotes(idea.upvotes + 1);
-      setVoted("up");
+  const handleUpvote = async () => {
+    if (isSubmitting) return;
+    const feedId = Number(idea.id);
+    if (Number.isNaN(feedId)) return;
+
+    const wasLiked = voted === "up";
+    const prevVotes = votes;
+    const prevVoted = voted;
+    const nextVotes = Math.max(0, prevVotes + (wasLiked ? -1 : 1));
+    setIsSubmitting(true);
+    setVotes(nextVotes);
+    setVoted(wasLiked ? null : "up");
+    onVoteChange?.({
+      ideaId: idea.id,
+      upvotes: nextVotes,
+      likedByMe: !wasLiked,
+    });
+
+    try {
+      if (wasLiked) {
+        await unlikeFeed(feedId);
+      } else {
+        await likeFeed(feedId);
+      }
+    } catch (error) {
+      setVotes(prevVotes);
+      setVoted(prevVoted);
+      onVoteChange?.({
+        ideaId: idea.id,
+        upvotes: prevVotes,
+        likedByMe: prevVoted === "up",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleDownvote = () => {
-    if (voted === "down") {
-      setVotes(idea.upvotes);
-      setVoted(null);
-    } else {
-      setVotes(idea.upvotes - 1);
-      setVoted("down");
+  const handleDownvote = async () => {
+    if (isSubmitting) return;
+    if (votes <= 0) return;
+
+    const feedId = Number(idea.id);
+    if (Number.isNaN(feedId)) return;
+    if (voted !== "up") return;
+
+    const prevVotes = votes;
+    const prevVoted = voted;
+    setIsSubmitting(true);
+    setVotes(Math.max(0, prevVotes - 1));
+    setVoted(null);
+    onVoteChange?.({
+      ideaId: idea.id,
+      upvotes: Math.max(0, prevVotes - 1),
+      likedByMe: false,
+    });
+
+    try {
+      await unlikeFeed(feedId);
+    } catch (error) {
+      setVotes(prevVotes);
+      setVoted(prevVoted);
+      onVoteChange?.({
+        ideaId: idea.id,
+        upvotes: prevVotes,
+        likedByMe: prevVoted === "up",
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

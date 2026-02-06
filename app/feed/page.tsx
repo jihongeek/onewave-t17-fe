@@ -1,101 +1,166 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { IdeaCard } from "@/components/feed/idea-card";
 import { FeedFilters } from "@/components/feed/feed-filters";
+import { listFeeds } from "@/lib/ideas/api";
+import type { FeedListItemResponse, IdeaCategory } from "@/lib/ideas/types";
 
-const MOCK_IDEAS = [
-  {
-    id: "1",
-    title: "AI 기반 개인 건강 관리 챗봇",
-    summary:
-      "바쁜 현대인을 위한 24시간 AI 건강 상담 서비스. 증상 분석, 건강 습관 추적 및 맞춤 조언 제공.",
-    score: 87,
-    upvotes: 142,
-    comments: 28,
-    author: "김민수",
-    tags: ["헬스케어", "AI/ML", "B2C"],
-    teamOpen: true,
-    createdAt: "2시간 전",
-  },
-  {
-    id: "2",
-    title: "프리랜서 세금 자동 계산 플랫폼",
-    summary:
-      "프리랜서와 1인 사업자를 위한 자동 세금 계산 및 신고 준비 도구. 영수증 OCR 인식과 절세 팁 제공.",
-    score: 79,
-    upvotes: 98,
-    comments: 15,
-    author: "이지연",
-    tags: ["핀테크", "SaaS", "B2B"],
-    teamOpen: true,
-    createdAt: "4시간 전",
-  },
-  {
-    id: "3",
-    title: "중고 명품 AI 감정 서비스",
-    summary:
-      "사진만 촬영하면 AI가 명품의 진위 여부를 판별해주는 모바일 앱. C2C 거래 시 신뢰도를 높여줍니다.",
-    score: 73,
-    upvotes: 76,
-    comments: 22,
-    author: "박서윤",
-    tags: ["이커머스", "AI/ML", "C2C"],
+type IdeaCardData = {
+  id: string;
+  title: string;
+  summary: string;
+  score: number;
+  upvotes: number;
+  comments: number;
+  author: string;
+  tags: string[];
+  teamOpen: boolean;
+  createdAt: string;
+  likedByMe: boolean;
+};
+
+const CATEGORY_LABELS: Record<IdeaCategory, string> = {
+  HEALTHCARE: "헬스케어",
+  FINTECH: "핀테크",
+  EDUTECH: "에듀테크",
+  ECOMMERCE: "이커머스",
+  SAAS: "SaaS",
+  SOCIAL: "소셜",
+  OTHER: "기타",
+};
+
+const CATEGORY_FILTER_MAP: Record<string, IdeaCategory | "ALL"> = {
+  all: "ALL",
+  healthcare: "HEALTHCARE",
+  fintech: "FINTECH",
+  edtech: "EDUTECH",
+  ecommerce: "ECOMMERCE",
+  saas: "SAAS",
+};
+
+function formatDate(isoString: string) {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return isoString;
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
+function toIdeaCardData(feed: FeedListItemResponse): IdeaCardData {
+  return {
+    id: String(feed.feedId),
+    title: feed.title,
+    summary: feed.problem,
+    score: feed.totalScore,
+    upvotes: feed.likeCount,
+    comments: feed.commentCount,
+    author: feed.authorName,
+    tags: [CATEGORY_LABELS[feed.category] ?? "기타"],
     teamOpen: false,
-    createdAt: "6시간 전",
-  },
-  {
-    id: "4",
-    title: "구독형 오피스 간식 큐레이션",
-    summary:
-      "회사 규모와 선호도에 맞춰 매주 다른 간식을 배달하는 B2B 구독 서비스. 직원 만족도 향상에 기여.",
-    score: 65,
-    upvotes: 54,
-    comments: 8,
-    author: "최준혁",
-    tags: ["이커머스", "구독", "B2B"],
-    teamOpen: true,
-    createdAt: "12시간 전",
-  },
-  {
-    id: "5",
-    title: "AI 기반 이력서 최적화 도구",
-    summary:
-      "채용 공고를 분석하여 이력서를 최적화해주는 AI 서비스. 합격률을 높이는 키워드와 구성을 추천합니다.",
-    score: 91,
-    upvotes: 203,
-    comments: 42,
-    author: "정하린",
-    tags: ["HR테크", "AI/ML", "SaaS"],
-    teamOpen: true,
-    createdAt: "1일 전",
-  },
-  {
-    id: "6",
-    title: "반려동물 행동 분석 카메라",
-    summary:
-      "AI 카메라로 반려동물의 행동 패턴을 분석하고 건강 이상 징후를 조기에 감지하는 IoT 서비스.",
-    score: 70,
-    upvotes: 67,
-    comments: 19,
-    author: "윤도현",
-    tags: ["펫테크", "IoT", "B2C"],
-    teamOpen: false,
-    createdAt: "1일 전",
-  },
-];
+    createdAt: formatDate(feed.createdAt),
+    likedByMe: feed.likedByMe,
+  };
+}
 
 export default function FeedPage() {
   const [sortBy, setSortBy] = useState("popular");
   const [category, setCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [feeds, setFeeds] = useState<FeedListItemResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const sortedIdeas = [...MOCK_IDEAS].sort((a, b) => {
-    if (sortBy === "popular") return b.upvotes - a.upvotes;
-    if (sortBy === "score") return b.score - a.score;
-    return 0;
-  });
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchFeeds = async () => {
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const data = await listFeeds();
+        if (isMounted) {
+          setFeeds(data);
+        }
+      } catch (error) {
+        if (isMounted) {
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "피드를 불러오지 못했습니다."
+          );
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchFeeds();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const filteredFeeds = useMemo(() => {
+    const mappedCategory = CATEGORY_FILTER_MAP[category] ?? "ALL";
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return feeds.filter((feed) => {
+      const categoryMatch =
+        mappedCategory === "ALL" || feed.category === mappedCategory;
+      if (!categoryMatch) return false;
+      if (!normalizedQuery) return true;
+      const searchableText = [
+        feed.title,
+        feed.problem,
+        feed.authorName,
+        CATEGORY_LABELS[feed.category] ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return searchableText.includes(normalizedQuery);
+    });
+  }, [category, feeds, searchQuery]);
+
+  const sortedIdeas = useMemo(() => {
+    const sorted = [...filteredFeeds];
+    sorted.sort((a, b) => {
+      if (sortBy === "popular") return b.likeCount - a.likeCount;
+      if (sortBy === "score") return b.totalScore - a.totalScore;
+      if (sortBy === "recent") {
+        return (
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      }
+      return 0;
+    });
+    return sorted.map(toIdeaCardData);
+  }, [filteredFeeds, sortBy]);
+
+  const handleVoteChange = (payload: {
+    ideaId: string;
+    upvotes: number;
+    likedByMe: boolean;
+  }) => {
+    const feedId = Number(payload.ideaId);
+    if (Number.isNaN(feedId)) return;
+    setFeeds((prev) =>
+      prev.map((feed) =>
+        feed.feedId === feedId
+          ? {
+              ...feed,
+              likeCount: payload.upvotes,
+              likedByMe: payload.likedByMe,
+            }
+          : feed
+      )
+    );
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -116,12 +181,37 @@ export default function FeedPage() {
             onSortChange={setSortBy}
             category={category}
             onCategoryChange={setCategory}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
           />
 
           <div className="mt-6 flex flex-col gap-4">
-            {sortedIdeas.map((idea) => (
-              <IdeaCard key={idea.id} idea={idea} />
-            ))}
+            {isLoading && (
+              <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                피드를 불러오는 중입니다...
+              </div>
+            )}
+            {errorMessage && (
+              <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
+                {errorMessage}
+              </div>
+            )}
+            {!isLoading &&
+              !errorMessage &&
+              sortedIdeas.map((idea) => (
+                <IdeaCard
+                  key={idea.id}
+                  idea={idea}
+                  onVoteChange={handleVoteChange}
+                />
+              ))}
+            {!isLoading && !errorMessage && sortedIdeas.length === 0 && (
+              <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                {searchQuery.trim().length > 0
+                  ? "검색 결과가 없습니다."
+                  : "아직 등록된 피드가 없습니다."}
+              </div>
+            )}
           </div>
         </div>
       </main>

@@ -81,3 +81,16 @@ export interface FeedDetailResponse {
   improvements2?: string;
   createdAt: string;
 }
+
+export interface FeedListItemResponse {
+  feedId: number;
+  title: string;
+  problem: string;
+  category: IdeaCategory;
+  authorName: string;
+  createdAt: string;
+  commentCount: number;
+  likeCount: number;
+  totalScore: number;
+  likedByMe: boolean;
+}
