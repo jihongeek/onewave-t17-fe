@@ -39,6 +39,8 @@ import {
   Trash2,
   AlertTriangle,
   LogOut,
+  Map,
+  ExternalLink,
 } from 'lucide-react';
 import {
   useAuth,
@@ -93,6 +95,119 @@ const MOCK_ACTIVITIES = [
     time: '3시간 전',
   },
 ];
+
+const SAVED_ROADMAP_KEY = 'savedRoadmap';
+
+// 내 로드맵 탭 컴포넌트
+function RoadmapTabContent() {
+  const [savedRoadmap, setSavedRoadmap] = useState<{
+    title: string;
+    description: string;
+    savedAt: string;
+    formData: {
+      teamSize: string;
+      budget: string;
+      period: string;
+    };
+    weeks: { week: number; title: string }[];
+  } | null>(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem(SAVED_ROADMAP_KEY);
+    if (stored) {
+      try {
+        setSavedRoadmap(JSON.parse(stored));
+      } catch {
+        // 파싱 실패 시 무시
+      }
+    }
+  }, []);
+
+  if (!savedRoadmap) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-8 text-center">
+        <Map className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
+        <p className="text-muted-foreground">아직 생성된 로드맵이 없습니다.</p>
+        <Button asChild className="mt-4">
+          <a href="/roadmap">
+            로드맵 만들기
+            <ExternalLink className="ml-1.5 h-4 w-4" />
+          </a>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-xl border border-border bg-card p-6">
+        <div className="flex items-start justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-foreground">
+              {savedRoadmap.title}
+            </h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {savedRoadmap.description}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Badge variant="outline">
+                {savedRoadmap.formData.teamSize === 'solo'
+                  ? '솔로'
+                  : savedRoadmap.formData.teamSize === 'small'
+                    ? '2-3명'
+                    : '4명+'}
+              </Badge>
+              <Badge variant="outline">
+                {savedRoadmap.formData.budget === 'zero'
+                  ? '0원'
+                  : savedRoadmap.formData.budget === 'low'
+                    ? '10만원 이하'
+                    : '100만원 이하'}
+              </Badge>
+              <Badge variant="outline">
+                {savedRoadmap.formData.period === '1month'
+                  ? '1개월'
+                  : savedRoadmap.formData.period === '3months'
+                    ? '3개월'
+                    : '6개월'}
+              </Badge>
+            </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              저장: {new Date(savedRoadmap.savedAt).toLocaleDateString('ko-KR')}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" asChild>
+            <a href="/roadmap">
+              상세 보기
+              <ExternalLink className="ml-1.5 h-4 w-4" />
+            </a>
+          </Button>
+        </div>
+
+        {/* 주차 요약 */}
+        <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {savedRoadmap.weeks.map(week => (
+            <div
+              key={week.week}
+              className="rounded-lg border border-border bg-accent/30 p-3"
+            >
+              <span className="text-sm font-semibold text-primary">
+                {week.week}주차
+              </span>
+              <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
+                {week.title}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <Button variant="outline" asChild className="w-full">
+        <a href="/roadmap">새 로드맵 만들기</a>
+      </Button>
+    </div>
+  );
+}
 
 export default function MyPage() {
   const router = useRouter();
@@ -337,8 +452,8 @@ export default function MyPage() {
                   {user.gender === 'MALE'
                     ? '남성'
                     : user.gender === 'FEMALE'
-                    ? '여성'
-                    : '기타'}
+                      ? '여성'
+                      : '기타'}
                 </Badge>
               )}
               <div className="mt-4 flex flex-wrap justify-center gap-6 md:justify-start">
@@ -479,10 +594,14 @@ export default function MyPage() {
 
           {/* 탭 */}
           <Tabs defaultValue="ideas" className="w-full">
-            <TabsList className="mb-6 grid w-full grid-cols-4">
+            <TabsList className="mb-6 grid w-full grid-cols-5">
               <TabsTrigger value="ideas">
                 <Lightbulb className="mr-1.5 h-4 w-4" />
-                <span className="hidden sm:inline">내 아이디어</span>
+                <span className="hidden sm:inline">아이디어</span>
+              </TabsTrigger>
+              <TabsTrigger value="roadmap">
+                <Map className="mr-1.5 h-4 w-4" />
+                <span className="hidden sm:inline">로드맵</span>
               </TabsTrigger>
               <TabsTrigger value="projects">
                 <Users className="mr-1.5 h-4 w-4" />
@@ -536,6 +655,11 @@ export default function MyPage() {
                   ))
                 )}
               </div>
+            </TabsContent>
+
+            {/* 로드맵 탭 */}
+            <TabsContent value="roadmap">
+              <RoadmapTabContent />
             </TabsContent>
 
             {/* 프로젝트 탭 */}
