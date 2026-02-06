@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useParams } from "next/navigation";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ScoreGauge } from "@/components/score-gauge";
@@ -10,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { useAuthModal } from "@/components/auth-modal";
+import { getFeedDetail } from "@/lib/ideas/api";
+import type { FeedDetailResponse, IdeaCategory } from "@/lib/ideas/types";
 import {
   ChevronUp,
   ChevronDown,
@@ -19,82 +22,108 @@ import {
   AlertTriangle,
   Send,
   UserPlus,
+  LogIn,
 } from "lucide-react";
 
-const MOCK_IDEA = {
-  id: "1",
-  title: "AI 기반 개인 건강 관리 챗봇",
-  problem:
-    "바쁜 현대인들이 건강 관리에 소홀해지는 문제. 병원 방문 전 간단한 증상 확인과 건강 상담이 어려운 상황.",
-  target: "25-45세 직장인, 건강에 관심 있지만 시간이 부족한 도시 거주자",
-  solution:
-    "AI 챗봇을 통한 24시간 건강 상담, 증상 분석, 건강 습관 추적 및 맞춤형 건강 조언 제공.",
-  differentiator:
-    "기존 건강 앱과 달리 대화형 AI를 통해 개인화된 상담 제공. 의료 데이터 기반 정확한 분석과 병원 연계 시스템.",
-  score: 87,
-  marketScore: 92,
-  innovationScore: 85,
-  feasibilityScore: 84,
-  upvotes: 142,
-  tags: ["헬스케어", "AI/ML", "B2C"],
-  author: "김민수",
-  createdAt: "2025년 2월 4일",
-  strengths: [
-    "명확한 타겟 시장과 고객 세그먼트를 설정했습니다.",
-    "해결하려는 문제가 실제로 존재하는 시장 니즈입니다.",
-    "기존 솔루션 대비 차별화 포인트가 분명합니다.",
-  ],
-  improvements: [
-    "수익 모델에 대한 구체적인 계획이 필요합니다.",
-    "기술 구현 난이도에 대한 리스크 분석을 추가하세요.",
-  ],
-  team: [
-    {
-      name: "김민수",
-      role: "기획/PM",
-      profileImageUrl: "/placeholder-user.jpg",
-    },
-    {
-      name: "이지연",
-      role: "프론트엔드",
-      profileImageUrl: "",
-    },
-  ],
-  openRoles: ["백엔드 개발자", "AI/ML 엔지니어", "디자이너"],
-  comments: [
-    {
-      id: "c1",
-      author: "박서윤",
-      profileImageUrl: "/placeholder-user.jpg",
-      text: "헬스케어 쪽 규제 이슈는 어떻게 해결할 계획인가요? 의료법 관련 검토가 필요할 것 같습니다.",
-      createdAt: "1시간 전",
-      likes: 5,
-    },
-    {
-      id: "c2",
-      author: "최준혁",
-      profileImageUrl: "",
-      text: "비슷한 서비스를 사용해 본 적이 있는데, 정확도가 핵심일 것 같습니다. 의료 데이터 파트너십이 있나요?",
-      createdAt: "3시간 전",
-      likes: 3,
-    },
-    {
-      id: "c3",
-      author: "정하린",
-      profileImageUrl: "/placeholder-user.jpg",
-      text: "타겟층이 명확하고 니즈가 큰 시장이라 가능성이 높아 보입니다. 수익 모델이 구독형인지 궁금합니다!",
-      createdAt: "5시간 전",
-      likes: 8,
-    },
-  ],
+const CATEGORY_LABELS: Record<IdeaCategory, string> = {
+  HEALTHCARE: "헬스케어",
+  FINTECH: "핀테크",
+  EDUTECH: "에듀테크",
+  ECOMMERCE: "이커머스",
+  SAAS: "SaaS",
+  SOCIAL: "소셜",
+  OTHER: "기타",
+};
+
+function formatDate(isoString: string) {
+  const date = new Date(isoString);
+  if (Number.isNaN(date.getTime())) return isoString;
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(date);
+}
+
+type CommentItem = {
+  id: string;
+  author: string;
+  profileImageUrl?: string;
+  text: string;
+  createdAt: string;
+};
+
+type TeamMember = {
+  name: string;
+  role: string;
+  profileImageUrl?: string;
 };
 
 export default function IdeaDetailPage() {
-  const [votes, setVotes] = useState(MOCK_IDEA.upvotes);
+  const params = useParams<{ id?: string }>();
+  const { isLoggedIn, isLoading: authLoading } = useAuth();
+  const { openModal } = useAuthModal();
+  const [feed, setFeed] = useState<FeedDetailResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [baseVotes, setBaseVotes] = useState(0);
+  const [votes, setVotes] = useState(0);
   const [voted, setVoted] = useState<"up" | "down" | null>(null);
   const [commentText, setCommentText] = useState("");
-  const { isLoggedIn } = useAuth();
-  const { openModal } = useAuthModal();
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isLoggedIn) {
+      setIsLoading(false);
+      setErrorMessage(null);
+      return;
+    }
+
+    const feedIdParam = params?.id;
+    const parsedId = Number(feedIdParam);
+    if (!feedIdParam || Number.isNaN(parsedId)) {
+      setErrorMessage("유효하지 않은 피드 ID입니다.");
+      setIsLoading(false);
+      return;
+    }
+
+    let isMounted = true;
+
+    const fetchFeed = async () => {
+      setIsLoading(true);
+      setErrorMessage(null);
+      try {
+        const feedResult = await getFeedDetail(parsedId);
+        if (!isMounted) return;
+        setFeed(feedResult);
+        setBaseVotes(feedResult.likeCount ?? 0);
+        setVotes(feedResult.likeCount ?? 0);
+      } catch (error) {
+        if (!isMounted) return;
+        setErrorMessage(
+          error instanceof Error
+            ? error.message
+            : "피드를 불러오지 못했습니다."
+        );
+        setFeed(null);
+      } finally {
+        if (isMounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    fetchFeed();
+    return () => {
+      isMounted = false;
+    };
+  }, [authLoading, isLoggedIn, params?.id]);
+
+  useEffect(() => {
+    setBaseVotes(0);
+    setVotes(0);
+    setVoted(null);
+  }, [feed?.feedId]);
 
   const requireLogin = useCallback(() => {
     if (isLoggedIn) return true;
@@ -106,6 +135,92 @@ export default function IdeaDetailPage() {
   const handleCommentSubmit = () => {
     if (!requireLogin()) return;
   };
+
+  if (authLoading || isLoading) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <main className="flex-1 bg-secondary px-4 py-8 lg:px-8 lg:py-12">
+          <div className="mx-auto max-w-4xl">
+            <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+              피드를 불러오는 중입니다...
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!isLoggedIn) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <main className="flex-1 bg-secondary px-4 py-8 lg:px-8 lg:py-12">
+          <div className="mx-auto max-w-4xl">
+            <div className="rounded-xl border border-border bg-card p-8 text-center">
+              <LogIn className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
+              <p className="text-muted-foreground">
+                피드를 보려면 로그인이 필요합니다.
+              </p>
+              <Button className="mt-4" onClick={() => openModal()}>
+                <LogIn className="mr-2 h-4 w-4" />
+                로그인하기
+              </Button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (errorMessage) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <main className="flex-1 bg-secondary px-4 py-8 lg:px-8 lg:py-12">
+          <div className="mx-auto max-w-4xl">
+            <div className="rounded-xl border border-destructive/40 bg-destructive/5 p-6 text-sm text-destructive">
+              {errorMessage}
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  if (!feed) {
+    return (
+      <div className="flex min-h-screen flex-col">
+        <Navbar />
+        <main className="flex-1 bg-secondary px-4 py-8 lg:px-8 lg:py-12">
+          <div className="mx-auto max-w-4xl">
+            <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+              피드 정보를 찾을 수 없습니다.
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  const categoryTag = CATEGORY_LABELS[feed.category] ?? "기타";
+  const strengths = [feed.strength1, feed.strength2].filter(
+    (value): value is string => Boolean(value && value.trim())
+  );
+  const improvements = [feed.improvements1, feed.improvements2].filter(
+    (value): value is string => Boolean(value && value.trim())
+  );
+  const strengthItems =
+    strengths.length > 0 ? strengths : ["강점 정보가 제공되지 않았습니다."];
+  const improvementItems =
+    improvements.length > 0 ? improvements : ["보완점 정보가 제공되지 않았습니다."];
+  const teamMembers: TeamMember[] = [];
+  const openRoles: string[] = [];
+  const comments: CommentItem[] = [];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -125,8 +240,8 @@ export default function IdeaDetailPage() {
                         setVoted(voted === "up" ? null : "up");
                         setVotes(
                           voted === "up"
-                            ? MOCK_IDEA.upvotes
-                            : MOCK_IDEA.upvotes + 1
+                            ? baseVotes
+                            : baseVotes + 1
                         );
                       }}
                       className={`rounded-md p-1 transition-colors ${
@@ -147,8 +262,8 @@ export default function IdeaDetailPage() {
                         setVoted(voted === "down" ? null : "down");
                         setVotes(
                           voted === "down"
-                            ? MOCK_IDEA.upvotes
-                            : MOCK_IDEA.upvotes - 1
+                            ? baseVotes
+                            : baseVotes - 1
                         );
                       }}
                       className={`rounded-md p-1 transition-colors ${
@@ -164,17 +279,17 @@ export default function IdeaDetailPage() {
 
                   <div className="flex-1">
                     <h1 className="text-2xl font-bold text-foreground">
-                      {MOCK_IDEA.title}
+                      {feed.title}
                     </h1>
                     <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                       <span className="font-medium text-foreground">
-                        {MOCK_IDEA.author}
+                        {feed.authorName}
                       </span>
                       <span>|</span>
-                      <span>{MOCK_IDEA.createdAt}</span>
+                      <span>{formatDate(feed.createdAt)}</span>
                     </div>
                     <div className="mt-3 flex flex-wrap gap-1.5">
-                      {MOCK_IDEA.tags.map((tag) => (
+                      {[categoryTag].map((tag) => (
                         <Badge
                           key={tag}
                           variant="secondary"
@@ -196,7 +311,7 @@ export default function IdeaDetailPage() {
                       해결하려는 문제
                     </h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
-                      {MOCK_IDEA.problem}
+                      {feed.problem}
                     </p>
                   </div>
                   <div>
@@ -204,7 +319,7 @@ export default function IdeaDetailPage() {
                       타겟 고객
                     </h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
-                      {MOCK_IDEA.target}
+                      {feed.targetCustomer}
                     </p>
                   </div>
                   <div>
@@ -212,7 +327,7 @@ export default function IdeaDetailPage() {
                       해결 방안
                     </h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
-                      {MOCK_IDEA.solution}
+                      {feed.solution}
                     </p>
                   </div>
                   <div>
@@ -220,7 +335,7 @@ export default function IdeaDetailPage() {
                       차별성
                     </h3>
                     <p className="text-sm leading-relaxed text-muted-foreground">
-                      {MOCK_IDEA.differentiator}
+                      {feed.differentiation}
                     </p>
                   </div>
                 </div>
@@ -230,7 +345,7 @@ export default function IdeaDetailPage() {
               <div className="rounded-2xl border border-border bg-card p-6 lg:p-8">
                 <h2 className="mb-6 flex items-center gap-2 text-lg font-semibold text-foreground">
                   <MessageCircle className="h-5 w-5" />
-                  댓글 ({MOCK_IDEA.comments.length})
+                  댓글 ({comments.length})
                 </h2>
 
                 <div className="mb-6 flex gap-3">
@@ -260,7 +375,7 @@ export default function IdeaDetailPage() {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  {MOCK_IDEA.comments.map((comment) => (
+                  {comments.map((comment) => (
                     <div
                       key={comment.id}
                       className="flex gap-3 rounded-lg border border-border p-4"
@@ -305,7 +420,7 @@ export default function IdeaDetailPage() {
                   </h2>
                   <div className="flex justify-center">
                     <ScoreGauge
-                      score={MOCK_IDEA.score}
+                      score={feed.totalScore ?? 0}
                       size={120}
                       strokeWidth={9}
                       label="종합 점수"
@@ -313,9 +428,9 @@ export default function IdeaDetailPage() {
                   </div>
                   <div className="mt-4 grid grid-cols-3 gap-2">
                     {[
-                      { label: "시장성", value: MOCK_IDEA.marketScore },
-                      { label: "혁신성", value: MOCK_IDEA.innovationScore },
-                      { label: "실현가능", value: MOCK_IDEA.feasibilityScore },
+                      { label: "시장성", value: feed.marketScore ?? 0 },
+                      { label: "혁신성", value: feed.innovationScore ?? 0 },
+                      { label: "실현가능", value: feed.feasibilityScore ?? 0 },
                     ].map((item) => (
                       <div
                         key={item.label}
@@ -337,7 +452,7 @@ export default function IdeaDetailPage() {
                       강점
                     </h3>
                     <ul className="flex flex-col gap-1">
-                      {MOCK_IDEA.strengths.map((s) => (
+                      {strengthItems.map((s) => (
                         <li
                           key={s}
                           className="flex items-start gap-1.5 text-xs text-muted-foreground"
@@ -355,7 +470,7 @@ export default function IdeaDetailPage() {
                       보완점
                     </h3>
                     <ul className="flex flex-col gap-1">
-                      {MOCK_IDEA.improvements.map((imp) => (
+                      {improvementItems.map((imp) => (
                         <li
                           key={imp}
                           className="flex items-start gap-1.5 text-xs text-muted-foreground"
@@ -376,7 +491,7 @@ export default function IdeaDetailPage() {
                   </h2>
 
                   <div className="flex flex-col gap-3">
-                    {MOCK_IDEA.team.map((member) => (
+                    {teamMembers.map((member) => (
                       <div
                         key={member.name}
                         className="flex items-center gap-3"
@@ -409,7 +524,7 @@ export default function IdeaDetailPage() {
                       모집 중인 역할
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
-                      {MOCK_IDEA.openRoles.map((role) => (
+                      {openRoles.map((role) => (
                         <Badge
                           key={role}
                           variant="outline"

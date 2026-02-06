@@ -51,6 +51,18 @@ export async function listMyIdeas(): Promise<IdeaResponse[]> {
 }
 
 /**
+ * 내 아이디어 단건 조회
+ * GET /api/ideas/{ideaId}
+ */
+export async function getMyIdea(ideaId: number): Promise<IdeaResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/ideas/${ideaId}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<IdeaResponse>(response);
+}
+
+/**
  * 아이디어 생성
  * POST /api/ideas
  */
@@ -131,6 +143,20 @@ export async function listFeeds(): Promise<FeedListItemResponse[]> {
     headers,
   });
   return handleResponse<FeedListItemResponse[]>(response);
+}
+
+/**
+ * 피드 상세 조회
+ * GET /api/feeds/{feedId}
+ */
+export async function getFeedDetail(
+  feedId: number
+): Promise<FeedDetailResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds/${feedId}`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<FeedDetailResponse>(response);
 }
 
 /**
