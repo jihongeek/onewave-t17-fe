@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -16,9 +17,18 @@ import { Sparkles, Loader2 } from "lucide-react";
 interface IdeaFormProps {
   onAnalyze: () => void;
   isAnalyzing: boolean;
+  postToUpvoteFeed: boolean;
+  onPostToUpvoteFeedChange: (value: boolean) => void;
+  isPostToUpvoteFeedDisabled?: boolean;
 }
 
-export function IdeaForm({ onAnalyze, isAnalyzing }: IdeaFormProps) {
+export function IdeaForm({
+  onAnalyze,
+  isAnalyzing,
+  postToUpvoteFeed,
+  onPostToUpvoteFeedChange,
+  isPostToUpvoteFeedDisabled = false,
+}: IdeaFormProps) {
   return (
     <div className="rounded-2xl border border-border bg-card p-6 shadow-sm lg:p-8">
       <h2 className="mb-6 text-lg font-semibold text-foreground">
@@ -113,6 +123,30 @@ export function IdeaForm({ onAnalyze, isAnalyzing }: IdeaFormProps) {
               </SelectContent>
             </Select>
           </div>
+        </div>
+
+        <div className="rounded-xl border border-border bg-secondary/40 p-4">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-semibold text-foreground">
+                업보트 피드 공개
+              </h3>
+              <p className="text-xs text-muted-foreground">
+                AI 분석 후 업보트 피드에 아이디어를 올립니다.
+              </p>
+            </div>
+            <Switch
+              checked={postToUpvoteFeed}
+              onCheckedChange={onPostToUpvoteFeedChange}
+              disabled={isPostToUpvoteFeedDisabled}
+              aria-label="업보트 피드 공개 토글"
+            />
+          </div>
+          {isPostToUpvoteFeedDisabled ? (
+            <p className="mt-2 text-xs text-muted-foreground">
+              AI 분석을 완료하면 공개 여부를 선택할 수 있습니다.
+            </p>
+          ) : null}
         </div>
 
         <Button
