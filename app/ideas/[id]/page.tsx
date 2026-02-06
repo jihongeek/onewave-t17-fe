@@ -11,10 +11,16 @@ import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
 import { useAuthModal } from "@/components/auth-modal";
-import { addFeedComment, getFeedDetail, listFeedComments } from "@/lib/ideas/api";
+import {
+  addFeedComment,
+  applyToFeed,
+  getFeedDetail,
+  listFeedComments,
+} from "@/lib/ideas/api";
 import type {
   FeedCommentResponse,
   FeedDetailResponse,
+  FeedPositionStatusResponse,
   IdeaCategory,
 } from "@/lib/ideas/types";
 import {
@@ -64,6 +70,7 @@ export default function IdeaDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
   const [baseVotes, setBaseVotes] = useState(0);
   const [votes, setVotes] = useState(0);
   const [voted, setVoted] = useState<"up" | "down" | null>(null);
@@ -157,16 +164,32 @@ export default function IdeaDetailPage() {
         setComments((prev) => [created, ...prev]);
         setCommentText("");
       })
-      .catch((error) => {
-        const message =
-          error instanceof Error ? error.message : "댓글 작성에 실패했습니다.";
-        alert(message);
+      .catch(() => {
+        alert("댓글 작성에 실패했습니다.");
       })
       .finally(() => {
         setIsSubmittingComment(false);
       });
   };
 
+  const handleApplyToTeam = () => {
+    if (!requireLogin()) return;
+    if (!feed) return;
+    const stack = window.prompt("참가 희망 포지션/스택을 입력해주세요.");
+    if (!stack || !stack.trim()) return;
+
+    setIsApplying(true);
+    applyToFeed(feed.feedId, { stack: stack.trim() })
+      .then(() => {
+        alert("참가 신청이 접수되었습니다.");
+      })
+      .catch(() => {
+        alert("참가 신청에 실패했습니다.");
+      })
+      .finally(() => {
+        setIsApplying(false);
+      });
+  };
   if (authLoading || isLoading) {
     return (
       <div className="flex min-h-screen flex-col">
@@ -249,8 +272,13 @@ export default function IdeaDetailPage() {
     strengths.length > 0 ? strengths : ["강점 정보가 제공되지 않았습니다."];
   const improvementItems =
     improvements.length > 0 ? improvements : ["보완점 정보가 제공되지 않았습니다."];
-  const teamMembers: TeamMember[] = [];
-  const openRoles: string[] = [];
+  const teamMembers: TeamMember[] =
+    feed.members?.map((member, index) => ({
+      name: member.name ?? `팀원${index + 1}`,
+      role: member.role ?? member.stack ?? "참여자",
+      profileImageUrl: member.profileImageUrl,
+    })) ?? [];
+  const positions: FeedPositionStatusResponse[] = feed.positions ?? [];
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -552,6 +580,11 @@ export default function IdeaDetailPage() {
                         </div>
                       </div>
                     ))}
+                    {teamMembers.length === 0 && (
+                      <div className="rounded-lg border border-border bg-secondary/30 p-3 text-xs text-muted-foreground">
+                        팀 멤버 정보가 없습니다.
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-4 border-t border-border pt-4">
@@ -559,19 +592,29 @@ export default function IdeaDetailPage() {
                       모집 중인 역할
                     </h3>
                     <div className="flex flex-wrap gap-1.5">
-                      {openRoles.map((role) => (
+                      {positions.map((position) => (
                         <Badge
-                          key={role}
+                          key={position.stack}
                           variant="outline"
                           className="text-xs"
                         >
-                          {role}
+                          {position.stack} {position.remaining}/{position.capacity}
                         </Badge>
                       ))}
+                      {positions.length === 0 && (
+                        <span className="text-xs text-muted-foreground">
+                          모집 포지션 정보가 없습니다.
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <Button className="mt-4 w-full" size="sm">
+                  <Button
+                    className="mt-4 w-full"
+                    size="sm"
+                    onClick={handleApplyToTeam}
+                    disabled={isApplying}
+                  >
                     <UserPlus className="mr-1.5 h-4 w-4" />
                     팀 참가 신청
                   </Button>

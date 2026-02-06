@@ -1,6 +1,7 @@
 // Idea & AI Analysis API Functions - Based on swagger.json
 import type {
   AiAnalysisResponse,
+  FeedApplyRequest,
   FeedCommentRequest,
   FeedCommentResponse,
   FeedCreateRequest,
@@ -8,6 +9,7 @@ import type {
   FeedListItemResponse,
   IdeaCreateRequest,
   IdeaResponse,
+  MessageResponse,
 } from './types';
 
 const API_BASE_URL =
@@ -189,6 +191,22 @@ export async function addFeedComment(
     body: JSON.stringify(data),
   });
   return handleResponse<FeedCommentResponse>(response);
+}
+
+/**
+ * 팀 참가 신청
+ * POST /api/feeds/{feedId}/applications
+ */
+export async function applyToFeed(
+  feedId: number,
+  data: FeedApplyRequest
+): Promise<MessageResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds/${feedId}/applications`, {
+    method: 'POST',
+    headers: getAuthHeaders(),
+    body: JSON.stringify(data),
+  });
+  return handleResponse<MessageResponse>(response);
 }
 
 /**

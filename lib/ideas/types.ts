@@ -35,6 +35,10 @@ export interface FeedCommentRequest {
   content: string;
 }
 
+export interface FeedApplyRequest {
+  stack: string;
+}
+
 // ==================== Response Types ====================
 export interface IdeaResponse {
   ideaId: number;
@@ -75,6 +79,8 @@ export interface FeedDetailResponse {
   authorName: string;
   likeCount: number;
   likedByMe: boolean;
+  members?: FeedMemberResponse[];
+  positions?: FeedPositionStatusResponse[];
   marketScore: number;
   innovationScore: number;
   feasibilityScore: number;
@@ -86,12 +92,31 @@ export interface FeedDetailResponse {
   createdAt: string;
 }
 
+export interface FeedMemberResponse {
+  memberId?: number;
+  name?: string;
+  role?: string;
+  profileImageUrl?: string;
+  stack?: string;
+}
+
+export interface FeedPositionStatusResponse {
+  stack: string;
+  capacity: number;
+  filled: number;
+  remaining: number;
+}
+
 export interface FeedCommentResponse {
   commentId: number;
   authorName: string;
   authorProfileImageUrl?: string;
   createdAt: string;
   content: string;
+}
+
+export interface MessageResponse {
+  message?: string;
 }
 
 export interface FeedListItemResponse {
