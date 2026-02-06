@@ -19,14 +19,18 @@ interface IdeaFormProps {
   onAnalyze: (data: IdeaCreateRequest) => void;
   isAnalyzing: boolean;
   onPublish: (positions: { stack: string; capacity: number }[]) => void;
+  onPrivate: () => void;
   isPublishDisabled?: boolean;
+  showPublishActions?: boolean;
 }
 
 export function IdeaForm({
   onAnalyze,
   isAnalyzing,
   onPublish,
+  onPrivate,
   isPublishDisabled = false,
+  showPublishActions = false,
 }: IdeaFormProps) {
   const [title, setTitle] = useState("AI 기반 개인 건강 관리 챗봇");
   const [problem, setProblem] = useState(
@@ -258,15 +262,6 @@ export function IdeaForm({
         </div>
 
         <Button
-          type="button"
-          className="w-full"
-          onClick={() => onPublish(positions)}
-          disabled={isPublishDisabled}
-        >
-          공개
-        </Button>
-
-        <Button
           type="submit"
           size="lg"
           className="mt-2"
@@ -284,6 +279,28 @@ export function IdeaForm({
             </>
           )}
         </Button>
+
+        {showPublishActions && (
+          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <Button
+              type="button"
+              variant="secondary"
+              className="w-full"
+              onClick={onPrivate}
+              disabled={isAnalyzing}
+            >
+              비공개
+            </Button>
+            <Button
+              type="button"
+              className="w-full"
+              onClick={() => onPublish(positions)}
+              disabled={isPublishDisabled}
+            >
+              공개
+            </Button>
+          </div>
+        )}
       </form>
     </div>
   );
