@@ -3,6 +3,7 @@ import type {
   AiAnalysisResponse,
   FeedCreateRequest,
   FeedDetailResponse,
+  FeedListItemResponse,
   IdeaCreateRequest,
   IdeaResponse,
 } from './types';
@@ -93,4 +94,16 @@ export async function createFeed(
     body: JSON.stringify(data),
   });
   return handleResponse<FeedDetailResponse>(response);
+}
+
+/**
+ * 피드 목록 조회
+ * GET /api/feeds
+ */
+export async function listFeeds(): Promise<FeedListItemResponse[]> {
+  const response = await fetch(`${API_BASE_URL}/api/feeds`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<FeedListItemResponse[]>(response);
 }
