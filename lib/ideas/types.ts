@@ -31,6 +31,14 @@ export interface FeedCreateRequest {
   }[];
 }
 
+export interface FeedCommentRequest {
+  content: string;
+}
+
+export interface FeedApplyRequest {
+  stack: string;
+}
+
 // ==================== Response Types ====================
 export interface IdeaResponse {
   ideaId: number;
@@ -71,6 +79,8 @@ export interface FeedDetailResponse {
   authorName: string;
   likeCount: number;
   likedByMe: boolean;
+  members?: FeedMemberResponse[];
+  positions?: FeedPositionStatusResponse[];
   marketScore: number;
   innovationScore: number;
   feasibilityScore: number;
@@ -80,6 +90,45 @@ export interface FeedDetailResponse {
   improvements1?: string;
   improvements2?: string;
   createdAt: string;
+}
+
+export interface FeedMemberResponse {
+  memberId?: number;
+  name?: string;
+  role?: string;
+  profileImageUrl?: string;
+  stack?: string;
+}
+
+export interface FeedPositionStatusResponse {
+  stack: string;
+  capacity: number;
+  filled: number;
+  remaining: number;
+}
+
+export type FeedApplicationStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface FeedApplicationResponse {
+  applicationId: number;
+  applicantName: string;
+  applicantProfileImageUrl?: string;
+  stack: string;
+  status: FeedApplicationStatus;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FeedCommentResponse {
+  commentId: number;
+  authorName: string;
+  authorProfileImageUrl?: string;
+  createdAt: string;
+  content: string;
+}
+
+export interface MessageResponse {
+  message?: string;
 }
 
 export interface FeedListItemResponse {
