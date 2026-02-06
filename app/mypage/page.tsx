@@ -52,49 +52,9 @@ import {
   setProfileImage,
 } from '@/lib/auth';
 import type { Gender, UpdateUserRequest } from '@/lib/auth';
-
-// TODO: 아이디어, 프로젝트, 활동 API가 생기면 실제 데이터로 교체
-const MOCK_IDEAS = [
-  {
-    id: '1',
-    title: 'AI 헬스케어 챗봇',
-    score: 87,
-    upvotes: 142,
-    status: 'active' as const,
-    createdAt: '2일 전',
-  },
-  {
-    id: '2',
-    title: '스마트 다이어트 관리 앱',
-    score: 72,
-    upvotes: 56,
-    status: 'active' as const,
-    createdAt: '1주일 전',
-  },
-];
-
-const MOCK_PROJECTS = [
-  {
-    id: 'p1',
-    title: '프리랜서 세금 계산기',
-    role: '프론트엔드',
-    owner: '이지연',
-    members: 4,
-  },
-];
-
-const MOCK_ACTIVITIES = [
-  {
-    id: 'a1',
-    text: 'AI 헬스케어 챗봇에 새 댓글이 달렸습니다.',
-    time: '1시간 전',
-  },
-  {
-    id: 'a2',
-    text: '프리랜서 세금 계산기 팀 참여 요청이 승인되었습니다.',
-    time: '3시간 전',
-  },
-];
+import { listMyIdeas } from '@/lib/ideas/api';
+import type { IdeaResponse, IdeaCategory, IdeaStage } from '@/lib/ideas/types';
+import { listMyTeams, type MyTeamResponse } from '@/lib/teams';
 
 import {
   listRoadmaps,
@@ -263,7 +223,7 @@ function RoadmapTabContent() {
             </div>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" asChild>
-                <a href="/roadmap">
+                <a href={`/roadmap?id=${roadmap.roadmapId}`}>
                   상세 보기
                   <ExternalLink className="ml-1.5 h-4 w-4" />
                 </a>
@@ -288,6 +248,219 @@ function RoadmapTabContent() {
 
       <Button variant="outline" asChild className="w-full">
         <a href="/roadmap">새 로드맵 만들기</a>
+      </Button>
+    </div>
+  );
+}
+
+// 카테고리 한글 레이블
+const CATEGORY_LABELS: Record<IdeaCategory, string> = {
+  HEALTHCARE: '헬스케어',
+  FINTECH: '핀테크',
+  EDUTECH: '에듀테크',
+  ECOMMERCE: '이커머스',
+  SAAS: 'SaaS',
+  SOCIAL: '소셜',
+  OTHER: '기타',
+};
+
+// 단계 한글 레이블
+const STAGE_LABELS: Record<IdeaStage, string> = {
+  IDEA: '아이디어',
+  PROTOTYPE: '프로토타입',
+  MVP: 'MVP',
+  LAUNCHED: '출시',
+};
+
+// 내 아이디어 탭 컴포넌트
+function IdeasTabContent() {
+  const [ideas, setIdeas] = useState<IdeaResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadIdeas();
+  }, []);
+
+  const loadIdeas = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await listMyIdeas();
+      setIdeas(data);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : '아이디어를 불러오는데 실패했습니다.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center rounded-xl border border-border bg-card p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-8 text-center">
+        <p className="text-destructive">{error}</p>
+        <Button variant="outline" className="mt-4" onClick={loadIdeas}>
+          다시 시도
+        </Button>
+      </div>
+    );
+  }
+
+  if (ideas.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-8 text-center">
+        <Lightbulb className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
+        <p className="text-muted-foreground">
+          아직 등록한 아이디어가 없습니다.
+        </p>
+        <Button asChild className="mt-4">
+          <a href="/ideas/new">
+            아이디어 등록하기
+            <ExternalLink className="ml-1.5 h-4 w-4" />
+          </a>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {ideas.map(idea => (
+        <a
+          key={idea.ideaId}
+          href={`/ideas/${idea.ideaId}`}
+          className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/20 hover:shadow-sm"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
+            <Lightbulb className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-foreground">
+              {idea.title}
+            </h3>
+            <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
+              <Badge variant="outline" className="text-xs">
+                {CATEGORY_LABELS[idea.category] || idea.category}
+              </Badge>
+              <Badge variant="secondary" className="text-xs">
+                {STAGE_LABELS[idea.stage] || idea.stage}
+              </Badge>
+            </div>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {new Date(idea.createdAt).toLocaleDateString('ko-KR')}
+          </span>
+        </a>
+      ))}
+
+      <Button variant="outline" asChild className="w-full">
+        <a href="/ideas/new">새 아이디어 등록</a>
+      </Button>
+    </div>
+  );
+}
+
+// 내 팀 탭 컴포넌트
+function TeamsTabContent() {
+  const [teams, setTeams] = useState<MyTeamResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    loadTeams();
+  }, []);
+
+  const loadTeams = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await listMyTeams();
+      setTeams(data);
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : '팀 목록을 불러오는데 실패했습니다.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center rounded-xl border border-border bg-card p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-8 text-center">
+        <p className="text-destructive">{error}</p>
+        <Button variant="outline" className="mt-4" onClick={loadTeams}>
+          다시 시도
+        </Button>
+      </div>
+    );
+  }
+
+  if (teams.length === 0) {
+    return (
+      <div className="rounded-xl border border-border bg-card p-8 text-center">
+        <Users className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
+        <p className="text-muted-foreground">참여 중인 팀이 없습니다.</p>
+        <Button asChild className="mt-4">
+          <a href="/feed">
+            팀 찾아보기
+            <ExternalLink className="ml-1.5 h-4 w-4" />
+          </a>
+        </Button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      {teams.map(team => (
+        <div
+          key={team.feedId}
+          className="flex items-center gap-4 rounded-xl border border-border bg-card p-4"
+        >
+          <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
+            <Users className="h-5 w-5 text-primary" />
+          </div>
+          <div className="flex-1">
+            <h3 className="text-sm font-semibold text-foreground">
+              {team.ideaTitle}
+            </h3>
+            <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+              <span>리더: {team.ownerName}</span>
+              <span>|</span>
+              <span>역할: {team.stack}</span>
+            </div>
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {new Date(team.joinedAt).toLocaleDateString('ko-KR')} 참여
+          </span>
+        </div>
+      ))}
+
+      <Button variant="outline" asChild className="w-full">
+        <a href="/feed">다른 팀 찾아보기</a>
       </Button>
     </div>
   );
@@ -540,22 +713,6 @@ export default function MyPage() {
                       : '기타'}
                 </Badge>
               )}
-              <div className="mt-4 flex flex-wrap justify-center gap-6 md:justify-start">
-                <div className="flex items-center gap-2 text-sm">
-                  <Lightbulb className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">아이디어</span>
-                  <span className="font-semibold text-foreground">
-                    {MOCK_IDEAS.length}
-                  </span>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Users className="h-4 w-4 text-primary" />
-                  <span className="text-muted-foreground">프로젝트</span>
-                  <span className="font-semibold text-foreground">
-                    {MOCK_PROJECTS.length}
-                  </span>
-                </div>
-              </div>
             </div>
             <Button
               variant="outline"
@@ -678,7 +835,7 @@ export default function MyPage() {
 
           {/* 탭 */}
           <Tabs defaultValue="ideas" className="w-full">
-            <TabsList className="mb-6 grid w-full grid-cols-5">
+            <TabsList className="mb-6 grid w-full grid-cols-4">
               <TabsTrigger value="ideas">
                 <Lightbulb className="mr-1.5 h-4 w-4" />
                 <span className="hidden sm:inline">아이디어</span>
@@ -687,13 +844,9 @@ export default function MyPage() {
                 <Map className="mr-1.5 h-4 w-4" />
                 <span className="hidden sm:inline">로드맵</span>
               </TabsTrigger>
-              <TabsTrigger value="projects">
+              <TabsTrigger value="teams">
                 <Users className="mr-1.5 h-4 w-4" />
-                <span className="hidden sm:inline">프로젝트</span>
-              </TabsTrigger>
-              <TabsTrigger value="activity">
-                <Clock className="mr-1.5 h-4 w-4" />
-                <span className="hidden sm:inline">활동</span>
+                <span className="hidden sm:inline">팀</span>
               </TabsTrigger>
               <TabsTrigger value="settings">
                 <Settings className="mr-1.5 h-4 w-4" />
@@ -703,42 +856,7 @@ export default function MyPage() {
 
             {/* 아이디어 탭 */}
             <TabsContent value="ideas">
-              <div className="flex flex-col gap-3">
-                {MOCK_IDEAS.length === 0 ? (
-                  <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
-                    아직 등록한 아이디어가 없습니다.
-                  </div>
-                ) : (
-                  MOCK_IDEAS.map(idea => (
-                    <div
-                      key={idea.id}
-                      className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 transition-all hover:border-primary/20 hover:shadow-sm"
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
-                        <span className="text-lg font-bold text-primary">
-                          {idea.score}
-                        </span>
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-semibold text-foreground">
-                          {idea.title}
-                        </h3>
-                        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                          <span>{idea.createdAt}</span>
-                        </div>
-                      </div>
-                      <Badge
-                        variant={
-                          idea.status === 'active' ? 'default' : 'secondary'
-                        }
-                        className="text-xs"
-                      >
-                        {idea.status === 'active' ? '진행중' : '완료'}
-                      </Badge>
-                    </div>
-                  ))
-                )}
-              </div>
+              <IdeasTabContent />
             </TabsContent>
 
             {/* 로드맵 탭 */}
@@ -746,68 +864,9 @@ export default function MyPage() {
               <RoadmapTabContent />
             </TabsContent>
 
-            {/* 프로젝트 탭 */}
-            <TabsContent value="projects">
-              <div className="flex flex-col gap-3">
-                {MOCK_PROJECTS.length === 0 ? (
-                  <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
-                    참여 중인 프로젝트가 없습니다.
-                  </div>
-                ) : (
-                  MOCK_PROJECTS.map(project => (
-                    <div
-                      key={project.id}
-                      className="flex items-center gap-4 rounded-xl border border-border bg-card p-4"
-                    >
-                      <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-accent">
-                        <Users className="h-5 w-5 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h3 className="text-sm font-semibold text-foreground">
-                          {project.title}
-                        </h3>
-                        <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
-                          <span>역할: {project.role}</span>
-                          <span>|</span>
-                          <span>리더: {project.owner}</span>
-                          <span>|</span>
-                          <span>{project.members}명</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </TabsContent>
-
-            {/* 활동 탭 */}
-            <TabsContent value="activity">
-              <div className="flex flex-col gap-3">
-                {MOCK_ACTIVITIES.length === 0 ? (
-                  <div className="rounded-xl border border-border bg-card p-8 text-center text-muted-foreground">
-                    아직 활동 기록이 없습니다.
-                  </div>
-                ) : (
-                  MOCK_ACTIVITIES.map(activity => (
-                    <div
-                      key={activity.id}
-                      className="flex items-start gap-3 rounded-xl border border-border bg-card p-4"
-                    >
-                      <div className="mt-0.5 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-accent">
-                        <Bell className="h-4 w-4 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm text-foreground">
-                          {activity.text}
-                        </p>
-                        <span className="text-xs text-muted-foreground">
-                          {activity.time}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+            {/* 팀 탭 */}
+            <TabsContent value="teams">
+              <TeamsTabContent />
             </TabsContent>
 
             {/* 설정 탭 */}
