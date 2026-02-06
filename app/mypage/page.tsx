@@ -96,34 +96,127 @@ const MOCK_ACTIVITIES = [
   },
 ];
 
-const SAVED_ROADMAP_KEY = 'savedRoadmap';
+import {
+  listRoadmaps,
+  deleteRoadmap,
+  type RoadmapResponse,
+} from '@/lib/roadmap';
 
 // 내 로드맵 탭 컴포넌트
 function RoadmapTabContent() {
-  const [savedRoadmap, setSavedRoadmap] = useState<{
-    title: string;
-    description: string;
-    savedAt: string;
-    formData: {
-      teamSize: string;
-      budget: string;
-      period: string;
-    };
-    weeks: { week: number; title: string }[];
-  } | null>(null);
+  const [roadmaps, setRoadmaps] = useState<RoadmapResponse[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
+  // 로드맵 목록 불러오기
   useEffect(() => {
-    const stored = localStorage.getItem(SAVED_ROADMAP_KEY);
-    if (stored) {
-      try {
-        setSavedRoadmap(JSON.parse(stored));
-      } catch {
-        // 파싱 실패 시 무시
-      }
-    }
+    loadRoadmaps();
   }, []);
 
-  if (!savedRoadmap) {
+  const loadRoadmaps = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const data = await listRoadmaps();
+      setRoadmaps(data);
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : '로드맵을 불러오는데 실패했습니다.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 로드맵 삭제
+  const handleDelete = async (roadmapId: number) => {
+    if (!confirm('이 로드맵을 삭제하시겠습니까?')) return;
+
+    setDeletingId(roadmapId);
+    try {
+      await deleteRoadmap(roadmapId);
+      setRoadmaps(roadmaps.filter(r => r.roadmapId !== roadmapId));
+    } catch (err) {
+      alert(err instanceof Error ? err.message : '삭제에 실패했습니다.');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // 케이스 레이블 변환
+  const getTeamSizeLabel = (value: string) => {
+    switch (value) {
+      case 'solo':
+        return '솔로';
+      case 'small':
+        return '2-3명';
+      case 'team':
+        return '4명+';
+      default:
+        return value;
+    }
+  };
+
+  const getBudgetLabel = (value: string) => {
+    switch (value) {
+      case 'zero':
+        return '0원';
+      case 'low':
+        return '10만원 이하';
+      case 'mid':
+        return '100만원 이하';
+      default:
+        return value;
+    }
+  };
+
+  const getTimelineLabel = (value: string) => {
+    switch (value) {
+      case '1month':
+        return '1개월';
+      case '3months':
+        return '3개월';
+      case '6months':
+        return '6개월';
+      default:
+        return value;
+    }
+  };
+
+  const getPriorityLabel = (value: string) => {
+    switch (value) {
+      case 'validation':
+        return '아이디어 검증';
+      case 'team':
+        return '팀 구성';
+      case 'funding':
+        return '자금 조달';
+      default:
+        return value;
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center rounded-xl border border-border bg-card p-8">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="rounded-xl border border-destructive/20 bg-destructive/10 p-8 text-center">
+        <p className="text-destructive">{error}</p>
+        <Button variant="outline" className="mt-4" onClick={loadRoadmaps}>
+          다시 시도
+        </Button>
+      </div>
+    );
+  }
+
+  if (roadmaps.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-card p-8 text-center">
         <Map className="mx-auto mb-4 h-12 w-12 text-muted-foreground/50" />
@@ -140,67 +233,58 @@ function RoadmapTabContent() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-xl border border-border bg-card p-6">
-        <div className="flex items-start justify-between">
-          <div>
-            <h3 className="text-lg font-semibold text-foreground">
-              {savedRoadmap.title}
-            </h3>
-            <p className="mt-1 text-sm text-muted-foreground">
-              {savedRoadmap.description}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Badge variant="outline">
-                {savedRoadmap.formData.teamSize === 'solo'
-                  ? '솔로'
-                  : savedRoadmap.formData.teamSize === 'small'
-                    ? '2-3명'
-                    : '4명+'}
-              </Badge>
-              <Badge variant="outline">
-                {savedRoadmap.formData.budget === 'zero'
-                  ? '0원'
-                  : savedRoadmap.formData.budget === 'low'
-                    ? '10만원 이하'
-                    : '100만원 이하'}
-              </Badge>
-              <Badge variant="outline">
-                {savedRoadmap.formData.period === '1month'
-                  ? '1개월'
-                  : savedRoadmap.formData.period === '3months'
-                    ? '3개월'
-                    : '6개월'}
-              </Badge>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">
-              저장: {new Date(savedRoadmap.savedAt).toLocaleDateString('ko-KR')}
-            </p>
-          </div>
-          <Button variant="outline" size="sm" asChild>
-            <a href="/roadmap">
-              상세 보기
-              <ExternalLink className="ml-1.5 h-4 w-4" />
-            </a>
-          </Button>
-        </div>
-
-        {/* 주차 요약 */}
-        <div className="mt-6 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
-          {savedRoadmap.weeks.map(week => (
-            <div
-              key={week.week}
-              className="rounded-lg border border-border bg-accent/30 p-3"
-            >
-              <span className="text-sm font-semibold text-primary">
-                {week.week}주차
-              </span>
-              <p className="mt-1 text-xs text-muted-foreground line-clamp-1">
-                {week.title}
+      {roadmaps.map(roadmap => (
+        <div
+          key={roadmap.roadmapId}
+          className="rounded-xl border border-border bg-card p-6"
+        >
+          <div className="flex items-start justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-foreground">
+                맞춤형 실행 로드맵 #{roadmap.roadmapId}
+              </h3>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge variant="outline">
+                  {getTeamSizeLabel(roadmap.teamSize)}
+                </Badge>
+                <Badge variant="outline">
+                  {getBudgetLabel(roadmap.budget)}
+                </Badge>
+                <Badge variant="outline">
+                  {getTimelineLabel(roadmap.timeline)}
+                </Badge>
+                <Badge variant="secondary">
+                  {getPriorityLabel(roadmap.priority)}
+                </Badge>
+              </div>
+              <p className="mt-2 text-xs text-muted-foreground">
+                생성: {new Date(roadmap.createdAt).toLocaleDateString('ko-KR')}
               </p>
             </div>
-          ))}
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" asChild>
+                <a href="/roadmap">
+                  상세 보기
+                  <ExternalLink className="ml-1.5 h-4 w-4" />
+                </a>
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDelete(roadmap.roadmapId)}
+                disabled={deletingId === roadmap.roadmapId}
+                className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+              >
+                {deletingId === roadmap.roadmapId ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Trash2 className="h-4 w-4" />
+                )}
+              </Button>
+            </div>
+          </div>
         </div>
-      </div>
+      ))}
 
       <Button variant="outline" asChild className="w-full">
         <a href="/roadmap">새 로드맵 만들기</a>
