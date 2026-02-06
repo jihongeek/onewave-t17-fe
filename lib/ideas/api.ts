@@ -39,6 +39,18 @@ function getAuthHeaders(): HeadersInit {
 // ==================== Idea API ====================
 
 /**
+ * 내 아이디어 목록 조회
+ * GET /api/ideas
+ */
+export async function listMyIdeas(): Promise<IdeaResponse[]> {
+  const response = await fetch(`${API_BASE_URL}/api/ideas`, {
+    method: 'GET',
+    headers: getAuthHeaders(),
+  });
+  return handleResponse<IdeaResponse[]>(response);
+}
+
+/**
  * 아이디어 생성
  * POST /api/ideas
  */
