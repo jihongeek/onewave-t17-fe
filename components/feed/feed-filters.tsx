@@ -15,6 +15,8 @@ interface FeedFiltersProps {
   onSortChange: (val: string) => void;
   category: string;
   onCategoryChange: (val: string) => void;
+  searchQuery: string;
+  onSearchChange: (val: string) => void;
 }
 
 export function FeedFilters({
@@ -22,12 +24,19 @@ export function FeedFilters({
   onSortChange,
   category,
   onCategoryChange,
+  searchQuery,
+  onSearchChange,
 }: FeedFiltersProps) {
   return (
     <div className="flex flex-wrap items-center gap-3">
       <div className="relative flex-1 md:max-w-xs">
         <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-        <Input placeholder="아이디어 검색..." className="pl-9" />
+        <Input
+          placeholder="아이디어 검색..."
+          className="pl-9"
+          value={searchQuery}
+          onChange={(event) => onSearchChange(event.target.value)}
+        />
       </div>
 
       <Select value={sortBy} onValueChange={onSortChange}>

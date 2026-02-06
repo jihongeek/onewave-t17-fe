@@ -70,6 +70,7 @@ function toIdeaCardData(feed: FeedListItemResponse): IdeaCardData {
 export default function FeedPage() {
   const [sortBy, setSortBy] = useState("popular");
   const [category, setCategory] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [feeds, setFeeds] = useState<FeedListItemResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -108,9 +109,23 @@ export default function FeedPage() {
 
   const filteredFeeds = useMemo(() => {
     const mappedCategory = CATEGORY_FILTER_MAP[category] ?? "ALL";
-    if (mappedCategory === "ALL") return feeds;
-    return feeds.filter((feed) => feed.category === mappedCategory);
-  }, [category, feeds]);
+    const normalizedQuery = searchQuery.trim().toLowerCase();
+    return feeds.filter((feed) => {
+      const categoryMatch =
+        mappedCategory === "ALL" || feed.category === mappedCategory;
+      if (!categoryMatch) return false;
+      if (!normalizedQuery) return true;
+      const searchableText = [
+        feed.title,
+        feed.problem,
+        feed.authorName,
+        CATEGORY_LABELS[feed.category] ?? "",
+      ]
+        .join(" ")
+        .toLowerCase();
+      return searchableText.includes(normalizedQuery);
+    });
+  }, [category, feeds, searchQuery]);
 
   const sortedIdeas = useMemo(() => {
     const sorted = [...filteredFeeds];
@@ -146,6 +161,8 @@ export default function FeedPage() {
             onSortChange={setSortBy}
             category={category}
             onCategoryChange={setCategory}
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
           />
 
           <div className="mt-6 flex flex-col gap-4">
@@ -166,7 +183,9 @@ export default function FeedPage() {
               ))}
             {!isLoading && !errorMessage && sortedIdeas.length === 0 && (
               <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
-                아직 등록된 피드가 없습니다.
+                {searchQuery.trim().length > 0
+                  ? "검색 결과가 없습니다."
+                  : "아직 등록된 피드가 없습니다."}
               </div>
             )}
           </div>
