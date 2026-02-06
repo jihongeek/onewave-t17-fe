@@ -1,0 +1,512 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "OneWave API",
+    "description": "OneWave Hackathon T17 Backend API",
+    "version": "v1"
+  },
+  "servers": [
+    {
+      "url": "https://onewave.syu-likelion.org"
+    },
+    {
+      "url": "http://localhost:8206"
+    }
+  ],
+  "tags": [
+    {
+      "name": "User",
+      "description": "My page and user profile API"
+    },
+    {
+      "name": "Auth",
+      "description": "Authentication and email verification API"
+    }
+  ],
+  "paths": {
+    "/api/users/me/password/email": {
+      "post": {
+        "tags": ["User"],
+        "summary": "Request password change email",
+        "description": "Send a verification code for password change",
+        "operationId": "requestPasswordChangeEmail",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/auth/signup": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Sign up",
+        "description": "Complete signup after email verification",
+        "operationId": "signup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SignupResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/signup/email": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Request signup email code",
+        "description": "Send verification code for signup",
+        "operationId": "requestSignupEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/signup/email/verify": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Verify signup email code",
+        "description": "Verify email code before signup",
+        "operationId": "verifySignupEmail",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailVerifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/password/reset": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Reset password",
+        "description": "Reset password with email and verification code",
+        "operationId": "resetPassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordResetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/password/forgot": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Request password reset code",
+        "description": "Send verification code for password reset",
+        "operationId": "requestPasswordReset",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth"],
+        "summary": "Login",
+        "description": "Login with email and password",
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/me": {
+      "get": {
+        "tags": ["User"],
+        "summary": "Get my profile",
+        "description": "Get the current user's profile",
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": ["User"],
+        "summary": "Delete account",
+        "description": "Delete the current user's account",
+        "operationId": "deleteMe",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      },
+      "patch": {
+        "tags": ["User"],
+        "summary": "Update my profile",
+        "description": "Update the current user's profile",
+        "operationId": "updateMe",
+        "requestBody": {
+          "description": "Update current user profile",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserRequest"
+              },
+              "example": {
+                "name": "string",
+                "birthDate": "2026-02-06",
+                "gender": "MALE"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/users/me/password": {
+      "patch": {
+        "tags": ["User"],
+        "summary": "Change password",
+        "description": "Change password after verifying the email code",
+        "operationId": "changePassword",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordChangeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/MessageResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "MessageResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "SignupRequest": {
+        "required": ["email", "name", "password"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "maxLength": 100,
+            "minLength": 6,
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 100,
+            "minLength": 0,
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string",
+            "enum": ["MALE", "FEMALE", "OTHER"]
+          }
+        }
+      },
+      "SignupResponse": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "EmailRequest": {
+        "required": ["email"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          }
+        }
+      },
+      "EmailVerifyRequest": {
+        "required": ["code", "email"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "PasswordResetRequest": {
+        "required": ["code", "email", "newPassword"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginRequest": {
+        "required": ["email", "password"],
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "accessToken": {
+            "type": "string"
+          },
+          "tokenType": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateUserRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string",
+            "enum": ["MALE", "FEMALE", "OTHER"]
+          }
+        }
+      },
+      "UserResponse": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "email": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "birthDate": {
+            "type": "string",
+            "format": "date"
+          },
+          "gender": {
+            "type": "string",
+            "enum": ["MALE", "FEMALE", "OTHER"]
+          }
+        }
+      },
+      "PasswordChangeRequest": {
+        "required": ["code", "newPassword"],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
