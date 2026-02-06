@@ -7,6 +7,8 @@ import { IdeaForm } from '@/components/ideas/idea-form';
 import { AiResultPanel } from '@/components/ideas/ai-result-panel';
 import { useAuth } from '@/lib/auth';
 import { useAuthModal } from '@/components/auth-modal';
+import { analyzeIdea, createIdea } from '@/lib/ideas/api';
+import type { IdeaCreateRequest } from '@/lib/ideas/types';
 
 export interface AiResult {
   totalScore: number;
@@ -32,30 +34,53 @@ export default function NewIdeaPage() {
     return false;
   }, [isLoggedIn, openModal]);
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async (formData: IdeaCreateRequest) => {
     if (!requireLogin()) return;
     setIsAnalyzing(true);
-    setTimeout(() => {
+    setAiResult(null);
+
+    try {
+      const createdIdea = await createIdea(formData);
+      const analysis = await analyzeIdea(createdIdea.ideaId);
+
+      const strengths = [analysis.strength1, analysis.strength2].filter(
+        (value): value is string => Boolean(value && value.trim())
+      );
+      const improvements = [analysis.improvements1, analysis.improvements2].filter(
+        (value): value is string => Boolean(value && value.trim())
+      );
+
+      const summaryParts = [];
+      if (strengths.length > 0) {
+        summaryParts.push(`강점: ${strengths.join(' / ')}`);
+      }
+      if (improvements.length > 0) {
+        summaryParts.push(`보완점: ${improvements.join(' / ')}`);
+      }
+
       setAiResult({
-        totalScore: 82,
-        marketScore: 88,
-        innovationScore: 79,
-        feasibilityScore: 78,
-        strengths: [
-          '명확한 타겟 시장과 고객 세그먼트를 설정했습니다.',
-          '해결하려는 문제가 실제로 존재하는 시장 니즈입니다.',
-          '기존 솔루션 대비 차별화 포인트가 분명합니다.',
-        ],
-        improvements: [
-          '수익 모델에 대한 구체적인 계획이 필요합니다.',
-          '기술 구현 난이도에 대한 리스크 분석을 추가하세요.',
-          '경쟁사 분석을 더 상세하게 보완하면 좋겠습니다.',
-        ],
+        totalScore: analysis.totalScore ?? 0,
+        marketScore: analysis.marketScore ?? 0,
+        innovationScore: analysis.innovationScore ?? 0,
+        feasibilityScore: analysis.feasibilityScore ?? 0,
+        strengths:
+          strengths.length > 0 ? strengths : ['강점 정보가 제공되지 않았습니다.'],
+        improvements:
+          improvements.length > 0
+            ? improvements
+            : ['보완점 정보가 제공되지 않았습니다.'],
         summary:
-          '전반적으로 시장성이 높고 문제 정의가 명확한 아이디어입니다. 타겟 고객과 해결 방안이 잘 연결되어 있으며, 차별성도 충분합니다. 다만 수익 모델과 기술적 리스크에 대한 보완이 필요합니다.',
+          summaryParts.length > 0
+            ? summaryParts.join(' ')
+            : 'AI 분석 결과 요약이 제공되지 않았습니다.',
       });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'AI 분석에 실패했습니다.';
+      alert(message);
+    } finally {
       setIsAnalyzing(false);
-    }, 2500);
+    }
   };
 
   return (
