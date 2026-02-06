@@ -1,13 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { ScoreGauge } from "@/components/score-gauge";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useAuth } from "@/lib/auth";
+import { useAuthModal } from "@/components/auth-modal";
 import {
   ChevronUp,
   ChevronDown,
@@ -47,15 +49,23 @@ const MOCK_IDEA = {
     "기술 구현 난이도에 대한 리스크 분석을 추가하세요.",
   ],
   team: [
-    { name: "김민수", role: "기획/PM", avatar: "김" },
-    { name: "이지연", role: "프론트엔드", avatar: "이" },
+    {
+      name: "김민수",
+      role: "기획/PM",
+      profileImageUrl: "/placeholder-user.jpg",
+    },
+    {
+      name: "이지연",
+      role: "프론트엔드",
+      profileImageUrl: "",
+    },
   ],
   openRoles: ["백엔드 개발자", "AI/ML 엔지니어", "디자이너"],
   comments: [
     {
       id: "c1",
       author: "박서윤",
-      avatar: "박",
+      profileImageUrl: "/placeholder-user.jpg",
       text: "헬스케어 쪽 규제 이슈는 어떻게 해결할 계획인가요? 의료법 관련 검토가 필요할 것 같습니다.",
       createdAt: "1시간 전",
       likes: 5,
@@ -63,7 +73,7 @@ const MOCK_IDEA = {
     {
       id: "c2",
       author: "최준혁",
-      avatar: "최",
+      profileImageUrl: "",
       text: "비슷한 서비스를 사용해 본 적이 있는데, 정확도가 핵심일 것 같습니다. 의료 데이터 파트너십이 있나요?",
       createdAt: "3시간 전",
       likes: 3,
@@ -71,7 +81,7 @@ const MOCK_IDEA = {
     {
       id: "c3",
       author: "정하린",
-      avatar: "정",
+      profileImageUrl: "/placeholder-user.jpg",
       text: "타겟층이 명확하고 니즈가 큰 시장이라 가능성이 높아 보입니다. 수익 모델이 구독형인지 궁금합니다!",
       createdAt: "5시간 전",
       likes: 8,
@@ -83,6 +93,19 @@ export default function IdeaDetailPage() {
   const [votes, setVotes] = useState(MOCK_IDEA.upvotes);
   const [voted, setVoted] = useState<"up" | "down" | null>(null);
   const [commentText, setCommentText] = useState("");
+  const { isLoggedIn } = useAuth();
+  const { openModal } = useAuthModal();
+
+  const requireLogin = useCallback(() => {
+    if (isLoggedIn) return true;
+    alert("로그인이 필요한 기능입니다");
+    openModal();
+    return false;
+  }, [isLoggedIn, openModal]);
+
+  const handleCommentSubmit = () => {
+    if (!requireLogin()) return;
+  };
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -224,7 +247,11 @@ export default function IdeaDetailPage() {
                       onChange={(e) => setCommentText(e.target.value)}
                     />
                     <div className="flex justify-end">
-                      <Button size="sm" disabled={!commentText.trim()}>
+                      <Button
+                        size="sm"
+                        disabled={!commentText.trim()}
+                        onClick={handleCommentSubmit}
+                      >
                         <Send className="mr-1.5 h-3.5 w-3.5" />
                         댓글 작성
                       </Button>
@@ -239,8 +266,14 @@ export default function IdeaDetailPage() {
                       className="flex gap-3 rounded-lg border border-border p-4"
                     >
                       <Avatar className="h-8 w-8 flex-shrink-0">
+                    {comment.profileImageUrl && (
+                      <AvatarImage
+                        src={comment.profileImageUrl}
+                        alt={comment.author}
+                      />
+                    )}
                         <AvatarFallback className="bg-secondary text-xs">
-                          {comment.avatar}
+                      {comment.author.charAt(0)}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1">
@@ -349,8 +382,14 @@ export default function IdeaDetailPage() {
                         className="flex items-center gap-3"
                       >
                         <Avatar className="h-8 w-8">
+                          {member.profileImageUrl && (
+                            <AvatarImage
+                              src={member.profileImageUrl}
+                              alt={member.name}
+                            />
+                          )}
                           <AvatarFallback className="bg-primary text-xs text-primary-foreground">
-                            {member.avatar}
+                            {member.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>

@@ -1,12 +1,12 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Lightbulb, Eye, EyeOff } from "lucide-react";
+import Link from 'next/link';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Lightbulb, Eye, EyeOff } from 'lucide-react';
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -35,9 +35,7 @@ export default function SignupPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Lightbulb className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">
-                IdeaForge
-              </span>
+              <span className="text-xl font-bold text-foreground">Mavis</span>
             </Link>
             <h1 className="mt-4 text-2xl font-bold text-foreground">
               회원가입
@@ -47,10 +45,18 @@ export default function SignupPage() {
             </p>
           </div>
 
-          <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={e => e.preventDefault()}
+          >
             <div className="flex flex-col gap-2">
               <Label htmlFor="name">이름</Label>
-              <Input id="name" type="text" placeholder="홍길동" autoComplete="name" />
+              <Input
+                id="name"
+                type="text"
+                placeholder="홍길동"
+                autoComplete="name"
+              />
             </div>
 
             <div className="flex flex-col gap-2">
@@ -68,7 +74,7 @@ export default function SignupPage() {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="8자 이상 입력"
                   autoComplete="new-password"
                 />
@@ -76,7 +82,9 @@ export default function SignupPage() {
                   type="button"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+                  aria-label={
+                    showPassword ? '비밀번호 숨기기' : '비밀번호 보기'
+                  }
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -90,8 +98,12 @@ export default function SignupPage() {
             <div className="flex flex-col gap-3 pt-1">
               <div className="flex items-start gap-2">
                 <Checkbox id="terms" className="mt-0.5" />
-                <Label htmlFor="terms" className="text-sm font-normal leading-relaxed text-muted-foreground">
-                  <span className="font-medium text-foreground">이용약관</span> 및{" "}
+                <Label
+                  htmlFor="terms"
+                  className="text-sm font-normal leading-relaxed text-muted-foreground"
+                >
+                  <span className="font-medium text-foreground">이용약관</span>{' '}
+                  및{' '}
                   <span className="font-medium text-foreground">
                     개인정보처리방침
                   </span>
@@ -100,7 +112,10 @@ export default function SignupPage() {
               </div>
               <div className="flex items-start gap-2">
                 <Checkbox id="marketing" className="mt-0.5" />
-                <Label htmlFor="marketing" className="text-sm font-normal text-muted-foreground">
+                <Label
+                  htmlFor="marketing"
+                  className="text-sm font-normal text-muted-foreground"
+                >
                   마케팅 정보 수신에 동의합니다 (선택)
                 </Label>
               </div>
@@ -111,28 +126,8 @@ export default function SignupPage() {
             </Button>
           </form>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-background px-3 text-xs text-muted-foreground">
-                또는
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" className="w-full bg-transparent">
-              Google로 가입
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent">
-              GitHub로 가입
-            </Button>
-          </div>
-
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            이미 계정이 있으신가요?{" "}
+            이미 계정이 있으신가요?{' '}
             <Link
               href="/login"
               className="font-medium text-primary hover:underline"

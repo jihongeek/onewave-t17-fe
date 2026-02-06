@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import Link from "next/link";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Lightbulb, Eye, EyeOff } from "lucide-react";
+import Link from 'next/link';
+import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Lightbulb, Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
@@ -34,19 +34,18 @@ export default function LoginPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary">
                 <Lightbulb className="h-5 w-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">
-                IdeaForge
-              </span>
+              <span className="text-xl font-bold text-foreground">Mavis</span>
             </Link>
-            <h1 className="mt-4 text-2xl font-bold text-foreground">
-              로그인
-            </h1>
+            <h1 className="mt-4 text-2xl font-bold text-foreground">로그인</h1>
             <p className="mt-1 text-sm text-muted-foreground">
               계정에 로그인하여 아이디어를 관리하세요
             </p>
           </div>
 
-          <form className="flex flex-col gap-4" onSubmit={(e) => e.preventDefault()}>
+          <form
+            className="flex flex-col gap-4"
+            onSubmit={e => e.preventDefault()}
+          >
             <div className="flex flex-col gap-2">
               <Label htmlFor="email">이메일</Label>
               <Input
@@ -70,7 +69,7 @@ export default function LoginPage() {
               <div className="relative">
                 <Input
                   id="password"
-                  type={showPassword ? "text" : "password"}
+                  type={showPassword ? 'text' : 'password'}
                   placeholder="비밀번호 입력"
                   autoComplete="current-password"
                 />
@@ -78,7 +77,9 @@ export default function LoginPage() {
                   type="button"
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                   onClick={() => setShowPassword(!showPassword)}
-                  aria-label={showPassword ? "비밀번호 숨기기" : "비밀번호 보기"}
+                  aria-label={
+                    showPassword ? '비밀번호 숨기기' : '비밀번호 보기'
+                  }
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -94,28 +95,8 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-background px-3 text-xs text-muted-foreground">
-                또는
-              </span>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-2">
-            <Button variant="outline" className="w-full bg-transparent">
-              Google로 로그인
-            </Button>
-            <Button variant="outline" className="w-full bg-transparent">
-              GitHub로 로그인
-            </Button>
-          </div>
-
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            아직 계정이 없으신가요?{" "}
+            아직 계정이 없으신가요?{' '}
             <Link
               href="/signup"
               className="font-medium text-primary hover:underline"

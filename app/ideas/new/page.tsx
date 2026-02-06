@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { IdeaForm } from "@/components/ideas/idea-form";
 import { AiResultPanel } from "@/components/ideas/ai-result-panel";
+import { useAuth } from "@/lib/auth";
+import { useAuthModal } from "@/components/auth-modal";
 
 export interface AiResult {
   totalScore: number;
@@ -19,8 +21,18 @@ export interface AiResult {
 export default function NewIdeaPage() {
   const [aiResult, setAiResult] = useState<AiResult | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const { isLoggedIn } = useAuth();
+  const { openModal } = useAuthModal();
+
+  const requireLogin = useCallback(() => {
+    if (isLoggedIn) return true;
+    alert("로그인이 필요한 기능입니다");
+    openModal();
+    return false;
+  }, [isLoggedIn, openModal]);
 
   const handleAnalyze = () => {
+    if (!requireLogin()) return;
     setIsAnalyzing(true);
     setTimeout(() => {
       setAiResult({

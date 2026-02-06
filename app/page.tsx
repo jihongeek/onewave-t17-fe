@@ -2,6 +2,7 @@ import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { HeroSection } from "@/components/home/hero-section";
 import { FeaturesSection } from "@/components/home/features-section";
+import { MicroBusinessSection } from "@/components/home/micro-business-section";
 import { HowItWorksSection } from "@/components/home/how-it-works-section";
 import { CtaSection } from "@/components/home/cta-section";
 
@@ -11,6 +12,7 @@ export default function HomePage() {
       <Navbar />
       <main className="flex-1">
         <HeroSection />
+        <MicroBusinessSection />
         <FeaturesSection />
         <HowItWorksSection />
         <CtaSection />

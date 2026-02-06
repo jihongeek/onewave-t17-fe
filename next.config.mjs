@@ -6,6 +6,14 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-}
+  async rewrites() {
+    return [
+      {
+        source: '/api/:path*',
+        destination: 'https://onewave.syu-likelion.org/api/:path*',
+      },
+    ];
+  },
+};
 
-export default nextConfig
+export default nextConfig;

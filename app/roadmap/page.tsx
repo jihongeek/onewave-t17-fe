@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useRef } from "react";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
 import { CostTable } from "@/components/roadmap/cost-table";
@@ -7,8 +8,23 @@ import { QuarterlyPlan } from "@/components/roadmap/quarterly-plan";
 import { BudgetChart } from "@/components/roadmap/budget-chart";
 import { Button } from "@/components/ui/button";
 import { Download, Share2 } from "lucide-react";
+import { useAuth } from "@/lib/auth";
+import { useAuthModal } from "@/components/auth-modal";
 
 export default function RoadmapPage() {
+  const { isLoggedIn, isLoading } = useAuth();
+  const { openModal } = useAuthModal();
+  const promptedRef = useRef(false);
+
+  useEffect(() => {
+    if (promptedRef.current || isLoading) return;
+    if (!isLoggedIn) {
+      promptedRef.current = true;
+      alert("로그인이 필요한 기능입니다");
+      openModal();
+    }
+  }, [isLoggedIn, isLoading, openModal]);
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
