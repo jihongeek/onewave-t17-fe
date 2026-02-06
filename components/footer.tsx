@@ -1,124 +1,25 @@
 'use client';
 
 import Link from 'next/link';
-import type { MouseEvent } from 'react';
 import { useAuth } from '@/lib/auth';
-import { useAuthModal } from '@/components/auth-modal';
 
 export function Footer() {
   const { isLoggedIn } = useAuth();
-  const { openModal } = useAuthModal();
-
-  const handleProtectedClick = (
-    event: MouseEvent<HTMLElement>,
-    requiresAuth?: boolean
-  ) => {
-    if (!requiresAuth || isLoggedIn) return;
-    event.preventDefault();
-    alert('로그인이 필요한 기능입니다');
-    openModal();
-  };
 
   return (
     <footer className="border-t border-border bg-card">
-      <div className="mx-auto max-w-7xl px-4 py-12 lg:px-8">
-        <div className="grid gap-8 md:grid-cols-4">
-          <div className="md:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-lg font-bold text-foreground">Mavis</span>
+      <div className="mx-auto max-w-7xl px-4 py-10 lg:px-8">
+        {/* 메인 콘텐츠 */}
+        <div className="flex flex-col items-center justify-between gap-6 md:flex-row">
+          {/* 로고 및 설명 */}
+          <div className="text-center md:text-left">
+            <Link href="/" className="inline-flex items-center gap-2">
+              <span className="text-xl font-bold text-foreground">Mavis</span>
             </Link>
-            <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-              AI 기반 아이디어 검증 플랫폼으로 당신의 스타트업 아이디어를 현실로
-              만들어 보세요.
+            <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+              AI 기반 아이디어 검증 플랫폼
             </p>
           </div>
-
-          <div>
-            <h4 className="mb-3 text-sm font-semibold text-foreground">
-              서비스
-            </h4>
-            <ul className="flex flex-col gap-2">
-              <li>
-                <Link
-                  href="/ideas/new"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                  onClick={event => handleProtectedClick(event, true)}
-                >
-                  아이디어 등록
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/feed"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  업보트 피드
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/roadmap"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                  onClick={event => handleProtectedClick(event, true)}
-                >
-                  자금 로드맵
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="mb-3 text-sm font-semibold text-foreground">계정</h4>
-            <ul className="flex flex-col gap-2">
-              <li>
-                <Link
-                  href="/login"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  로그인
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/signup"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  회원가입
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href="/mypage"
-                  className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                >
-                  마이페이지
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          <div>
-            <h4 className="mb-3 text-sm font-semibold text-foreground">지원</h4>
-            <ul className="flex flex-col gap-2">
-              <li>
-                <span className="text-sm text-muted-foreground">이용약관</span>
-              </li>
-              <li>
-                <span className="text-sm text-muted-foreground">
-                  개인정보처리방침
-                </span>
-              </li>
-              <li>
-                <span className="text-sm text-muted-foreground">고객센터</span>
-              </li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-10 border-t border-border pt-6">
-          <p className="text-center text-xs text-muted-foreground">
-            &copy; 2026 Mavis. All rights reserved.
-          </p>
         </div>
       </div>
     </footer>

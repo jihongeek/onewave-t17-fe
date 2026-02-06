@@ -55,7 +55,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = useCallback(
     async (accessToken: string) => {
       localStorage.setItem(TOKEN_KEY, accessToken);
-      await fetchUser();
+      try {
+        await fetchUser();
+      } catch {
+        // 유저 정보 fetch 실패해도 토큰은 저장됨
+        // 페이지 리로드로 상태 확실히 반영
+        window.location.reload();
+      }
     },
     [fetchUser]
   );

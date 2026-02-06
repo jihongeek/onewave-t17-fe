@@ -92,7 +92,7 @@ function AuthModal({ open, onOpenChange, hideTrigger }: AuthModalProps) {
     try {
       const response = await login(loginForm);
       await authLogin(response.accessToken);
-      setOpen(false);
+      setDialogOpen(false);
       resetForms();
     } catch (err) {
       setError(err instanceof Error ? err.message : '로그인에 실패했습니다.');
