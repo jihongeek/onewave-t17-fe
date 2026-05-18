@@ -7,8 +7,8 @@ export function MicroBusinessSection() {
             왜 지금, 나만의 아이디어로 시작해야 할까요?
           </h2>
           <p className="mt-4 text-pretty text-lg leading-relaxed text-muted-foreground">
-            거대 조직이 아닌 개인이 AI로 무장하는 시대입니다. 가벼운 실험이
-            더 빠르게 검증되고, 그 결과가 Micro Business로 이어집니다.
+            거대 조직이 아닌 개인이 AI로 무장하는 시대입니다. 가벼운 실험이 더
+            빠르게 검증되고, 그 결과가 Micro Business로 이어집니다.
           </p>
         </div>
 
@@ -23,7 +23,6 @@ export function MicroBusinessSection() {
             />
           </div>
         </div>
-
       </div>
     </section>
   );
