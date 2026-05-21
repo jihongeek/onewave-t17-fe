@@ -1,4 +1,4 @@
-import type { Config } from 'tailwindcss'
+import type { Config } from 'tailwindcss';
 
 const config: Config = {
   darkMode: ['class'],
@@ -71,6 +71,14 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       keyframes: {
+        'background-position-spin': {
+          '0%': {
+            'background-position': 'top center',
+          },
+          '100%': {
+            'background-position': 'bottom center',
+          },
+        },
         'accordion-down': {
           from: {
             height: '0',
@@ -89,11 +97,13 @@ const config: Config = {
         },
       },
       animation: {
+        'background-position-spin':
+          'background-position-spin 3000ms infinite alternate',
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
       },
     },
   },
   plugins: [require('tailwindcss-animate')],
-}
-export default config
+};
+export default config;
